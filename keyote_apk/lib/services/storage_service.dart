@@ -1,0 +1,49 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/server_config.dart';
+import '../utils/constants.dart';
+
+class StorageService {
+  static StorageService? _instance;
+  SharedPreferences? _prefs;
+
+  StorageService._();
+
+  static Future<StorageService> getInstance() async {
+    if (_instance == null) {
+      _instance = StorageService._();
+      _instance!._prefs = await SharedPreferences.getInstance();
+    }
+    return _instance!;
+  }
+
+  Future<ServerConfig?> getServerConfig() async {
+    final jsonString = _prefs?.getString(AppConstants.prefKeyServerConfig);
+    if (jsonString == null) return null;
+
+    try {
+      final json = jsonDecode(jsonString) as Map<String, dynamic>;
+      return ServerConfig.fromJson(json);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveServerConfig(ServerConfig config) async {
+    final jsonString = jsonEncode(config.toJson());
+    return await _prefs?.setString(
+          AppConstants.prefKeyServerConfig,
+          jsonString,
+        ) ??
+        false;
+  }
+
+  Future<String?> getThemeMode() async {
+    return _prefs?.getString(AppConstants.prefKeyThemeMode);
+  }
+
+  Future<bool> saveThemeMode(String mode) async {
+    return await _prefs?.setString(AppConstants.prefKeyThemeMode, mode) ??
+        false;
+  }
+}
