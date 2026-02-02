@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:soundpool/soundpool.dart';
+import 'package:flutter/services.dart';
 import '../models/server_config.dart';
 import '../services/keyboard_service.dart';
 import '../services/storage_service.dart';
@@ -8,7 +9,8 @@ import '../utils/constants.dart';
 class SettingsViewModel extends ChangeNotifier {
   final KeyboardService _keyboardService;
   final StorageService _storageService;
-  final AudioPlayer _previewPlayer = AudioPlayer();
+  Soundpool? _previewPool;
+  final Map<String, int> _soundCache = {};
 
   String _ip = '';
   int _port = 5000;
@@ -19,6 +21,12 @@ class SettingsViewModel extends ChangeNotifier {
   String _selectedSound = AppConstants.defaultSound;
 
   SettingsViewModel(this._keyboardService, this._storageService) {
+    _previewPool = Soundpool.fromOptions(
+      options: SoundpoolOptions(
+        streamType: StreamType.notification,
+        maxStreams: 1,
+      ),
+    );
     _loadSettings();
   }
 
@@ -32,7 +40,7 @@ class SettingsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _previewPlayer.dispose();
+    _previewPool?.dispose();
     super.dispose();
   }
 
@@ -119,14 +127,23 @@ class SettingsViewModel extends ChangeNotifier {
     playPreview(sound);
   }
 
-  void playPreview(String sound) {
-    _previewPlayer.stop();
-    _previewPlayer
-        .play(
-          AssetSource('sounds/$sound'),
-          mode: PlayerMode.lowLatency,
-          volume: 1.0,
-        )
-        .catchError((_) {});
+  Future<void> playPreview(String sound) async {
+    if (_previewPool == null) return;
+    
+    try {
+      // Load sound if not cached
+      if (!_soundCache.containsKey(sound)) {
+        final asset = await rootBundle.load('assets/sounds/$sound');
+        _soundCache[sound] = await _previewPool!.load(asset);
+      }
+      
+      // Play the cached sound
+      final soundId = _soundCache[sound];
+      if (soundId != null) {
+        await _previewPool!.play(soundId);
+      }
+    } catch (e) {
+      // Silently ignore preview errors
+    }
   }
 }

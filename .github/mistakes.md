@@ -28,3 +28,10 @@ _Root Cause:_ Async platform channel overload. Calling stop() + play() per keyst
 _Solution:_ (1) REMOVE stop() call completely - play() already restarts, stop() adds zero benefit and doubles traffic, (2) Reduce pool from 15 to 5 - matches SoundPool default max streams (5-10), bigger pool = more overhead not more sound, (3) Just play() repeatedly like drum pads - no stop/resume/setSource complexity
 _Lesson:_ For short SFX never call stop() before play(). Think drum pads not music players. More players ≠ better (counterintuitive but true). Audio systems are brutally literal - spam them, they go quiet. For keyboards use soundpool architecture (1 native object, just play(id)), for music use audioplayers. Different tools (Werkzeug) for different jobs
 _Related Files:_ keyboard_viewmodel.dart (_audioPoolSize, _playSound method)
+
+## 2026-02-02 - Soundpool Migration (Final Fix)
+_Problem:_ Even after removing stop() and reducing pool size, audio still died during fast typing. Audioplayers architecture fundamentally wrong for keyboard clicks
+_Root Cause:_ Audioplayers uses multiple player instances with async state machines. Each play() call goes through: platform channel → player state check → native layer → SoundPool. Even without stop(), this is too many layers for 15+ keys/sec. Architecture mismatch: audioplayers designed for music (seek/pause/resume), keyboards need drum-pad immediacy
+_Solution:_ Switched to soundpool package. Single native object, no player instances, no state machine. Just play(soundId) → instant native call. Preload sound once, get ID, play ID repeatedly. Matches Android SoundPool architecture directly
+_Lesson:_ Use correct tool for job (Werkzeug). Music player (audioplayers) ≠ Click player (soundpool). For <20ms latency requirements, need native-level architecture. No amount of optimization fixes wrong abstraction layer. Soundpool = architecturally correct for keyboards. When expert says "Option 2: soundpool", they diagnosed the real issue
+_Related Files:_ pubspec.yaml (audioplayers → soundpool), keyboard_viewmodel.dart (_playSound, _initializeAudioPool), settings_viewmodel.dart (playPreview)

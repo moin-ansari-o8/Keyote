@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:soundpool/soundpool.dart';
+import 'package:flutter/services.dart';
 import '../models/key_command.dart';
 import '../models/dual_char.dart';
 import '../services/keyboard_service.dart';
@@ -11,12 +12,11 @@ class KeyboardViewModel extends ChangeNotifier {
   final KeyboardService _keyboardService;
   final StorageService _storageService;
 
-  // Audio pool for zero-latency sound effects (like instrument/game apps)
-  static const int _audioPoolSize =
-      5; // Pool of 5 players (matches SoundPool stream limits, more = overhead)
-  final List<AudioPlayer> _audioPool = [];
-  int _currentPlayerIndex = 0;
-  bool _audioPoolInitialized = false;
+  // Soundpool for zero-latency keyboard clicks (architecturally correct)
+  // Single native object, no player instances, no state machine - just play(id)
+  Soundpool? _soundpool;
+  int? _soundId;
+  bool _audioInitialized = false;
 
   bool _ctrlPressed = false;
   bool _shiftPressed = false;
@@ -74,11 +74,8 @@ class KeyboardViewModel extends ChangeNotifier {
     _connectionCheckTimer?.cancel();
     _debounceTimer?.cancel();
     _repeatTimer?.cancel();
-    // Dispose all players in pool
-    for (var player in _audioPool) {
-      player.dispose();
-    }
-    _audioPool.clear();
+    // Release soundpool resources
+    _soundpool?.dispose();
     super.dispose();
   }
 
@@ -132,6 +129,13 @@ class KeyboardViewModel extends ChangeNotifier {
   Future<void> updateSelectedSound(String sound) async {
     _selectedSound = sound;
     await _storageService.setSelectedSound(sound);
+    
+    // Reload soundpool with new sound
+    if (_audioInitialized && _soundpool != null) {
+      final asset = await rootBundle.load('assets/sounds/$_selectedSound');
+      _soundId = await _soundpool!.load(asset);
+    }
+    
     notifyListeners();
   }
 
@@ -200,39 +204,32 @@ class KeyboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Initialize audio pool with pre-loaded players for instant playback
+  // Initialize soundpool with pre-loaded sound for instant playback
   Future<void> _initializeAudioPool() async {
-    if (_audioPoolInitialized) return;
+    if (_audioInitialized) return;
 
-    // Create pool of players
-    for (int i = 0; i < _audioPoolSize; i++) {
-      final player = AudioPlayer();
-      // Set to low latency mode
-      await player.setPlayerMode(PlayerMode.lowLatency);
-      // Set release mode to stop (resets to beginning when finished)
-      await player.setReleaseMode(ReleaseMode.stop);
-      _audioPool.add(player);
-    }
+    // Create soundpool with max 5 streams (matches Android SoundPool limits)
+    _soundpool = Soundpool.fromOptions(
+      options: SoundpoolOptions(
+        streamType: StreamType.notification,
+        maxStreams: 5,
+      ),
+    );
 
-    _audioPoolInitialized = true;
+    // Load sound file and get sound ID
+    final asset = await rootBundle.load('assets/sounds/$_selectedSound');
+    _soundId = await _soundpool!.load(asset);
+
+    _audioInitialized = true;
   }
 
   void _playSound() {
-    if (!_soundEnabled || !_audioPoolInitialized) return;
+    if (!_soundEnabled || !_audioInitialized || _soundId == null) return;
 
-    // Use round-robin player from pool (like drum pads)
-    final player = _audioPool[_currentPlayerIndex];
-
-    // Just play - no stop needed. play() automatically restarts.
-    // Calling stop() before play() floods async platform channel queue
-    // causing SoundPool resource exhaustion (Überlastung).
-    player.play(
-      AssetSource('sounds/$_selectedSound'),
-      mode: PlayerMode.lowLatency,
-    );
-
-    // Move to next player in pool for next sound (allows overlapping)
-    _currentPlayerIndex = (_currentPlayerIndex + 1) % _audioPoolSize;
+    // Single native call - soundpool handles everything internally
+    // No player instances, no state machine, no async overload
+    // This is architecturally correct for keyboard clicks
+    _soundpool!.play(_soundId!);
   }
 
   void sendKey(String key, {bool? ctrl, bool? shift, bool? alt, bool? win}) {
