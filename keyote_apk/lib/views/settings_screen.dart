@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/settings_viewmodel.dart';
+import '../viewmodels/keyboard_viewmodel.dart';
 import '../utils/validators.dart';
 import '../utils/constants.dart';
 
@@ -256,11 +257,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                               );
                             }).toList(),
-                            onChanged: (String? newValue) {
+                            onChanged: (String? newValue) async {
                               if (newValue != null) {
-                                viewModel.updateSelectedSound(newValue);
+                                await viewModel.updateSelectedSound(newValue);
+                                // Notify keyboard viewmodel to reload sound
+                                if (mounted) {
+                                  context.read<KeyboardViewModel>().reloadSoundSettings();
+                                }
                               }
                             },
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        ListTile(
+                          leading: const Icon(Icons.volume_up),
+                          title: const Text('Volume'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Slider(
+                                      value: viewModel.soundVolume,
+                                      min: AppConstants.minVolume,
+                                      max: AppConstants.maxVolume,
+                                      divisions: 20,
+                                      label: '${(viewModel.soundVolume * 100).round()}%',
+                                      onChanged: (double value) async {
+                                        await viewModel.updateSoundVolume(value);
+                                        // Notify keyboard viewmodel to update volume
+                                        if (mounted) {
+                                          context.read<KeyboardViewModel>().reloadSoundSettings();
+                                        }
+                                      },
+                                      onChangeEnd: (double value) {
+                                        // Play preview at selected volume
+                                        viewModel.playPreview(viewModel.selectedSound);
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  SizedBox(
+                                    width: 45,
+                                    child: Text(
+                                      '${(viewModel.soundVolume * 100).round()}%',
+                                      style: theme.textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],

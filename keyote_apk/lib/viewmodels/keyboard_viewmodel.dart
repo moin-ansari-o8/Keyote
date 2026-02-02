@@ -26,6 +26,7 @@ class KeyboardViewModel extends ChangeNotifier {
   bool _capsLockActive = false;
   bool _soundEnabled = true;
   String _selectedSound = AppConstants.defaultSound;
+  double _soundVolume = AppConstants.defaultVolume;
   bool _isConnected = false;
   String _inputPreview = '';
   int _cursorPosition = 0;
@@ -110,6 +111,7 @@ class KeyboardViewModel extends ChangeNotifier {
   bool get capsLockActive => _capsLockActive;
   bool get soundEnabled => _soundEnabled;
   String get selectedSound => _selectedSound;
+  double get soundVolume => _soundVolume;
   bool get isConnected => _isConnected;
   String get inputPreview => _inputPreview;
   int get cursorPosition => _cursorPosition;
@@ -117,6 +119,26 @@ class KeyboardViewModel extends ChangeNotifier {
   Future<void> _loadSoundPreferences() async {
     _soundEnabled = await _storageService.getSoundEnabled();
     _selectedSound = await _storageService.getSelectedSound();
+    _soundVolume = await _storageService.getSoundVolume();
+    notifyListeners();
+  }
+
+  // Public method to reload sound settings from storage
+  Future<void> reloadSoundSettings() async {
+    final newSound = await _storageService.getSelectedSound();
+    final newVolume = await _storageService.getSoundVolume();
+    
+    if (newSound != _selectedSound) {
+      _selectedSound = newSound;
+      if (_audioInitialized && _soloud != null) {
+        _soundSource = await _soloud!.loadAsset('assets/sounds/$_selectedSound');
+      }
+    }
+    
+    if (newVolume != _soundVolume) {
+      _soundVolume = newVolume;
+    }
+    
     notifyListeners();
   }
 
@@ -228,7 +250,7 @@ class KeyboardViewModel extends ChangeNotifier {
     // Single method call - SoLoud C++ engine handles everything
     // <10ms latency, zero state machine, instant playback
     // Same architecture as professional piano/keyboard apps
-    _soloud!.play(_soundSource!);
+    _soloud!.play(_soundSource!, volume: _soundVolume);
   }
 
   void sendKey(String key, {bool? ctrl, bool? shift, bool? alt, bool? win}) {

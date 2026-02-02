@@ -75,4 +75,14 @@ class StorageService {
     return await _prefs?.setString(AppConstants.prefKeySelectedSound, sound) ??
         false;
   }
+
+  Future<double> getSoundVolume() async {
+    return _prefs?.getDouble(AppConstants.prefKeySoundVolume) ??
+        AppConstants.defaultVolume;
+  }
+
+  Future<bool> setSoundVolume(double volume) async {
+    return await _prefs?.setDouble(AppConstants.prefKeySoundVolume, volume) ??
+        false;
+  }
 }

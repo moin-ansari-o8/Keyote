@@ -18,6 +18,7 @@ class SettingsViewModel extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   bool _soundEnabled = true;
   String _selectedSound = AppConstants.defaultSound;
+  double _soundVolume = AppConstants.defaultVolume;
 
   SettingsViewModel(this._keyboardService, this._storageService) {
     _initPreviewAudio();
@@ -40,6 +41,7 @@ class SettingsViewModel extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   bool get soundEnabled => _soundEnabled;
   String get selectedSound => _selectedSound;
+  double get soundVolume => _soundVolume;
 
   @override
   void dispose() {
@@ -68,6 +70,7 @@ class SettingsViewModel extends ChangeNotifier {
 
     _soundEnabled = await _storageService.getSoundEnabled();
     _selectedSound = await _storageService.getSelectedSound();
+    _soundVolume = await _storageService.getSoundVolume();
     notifyListeners();
   }
 
@@ -122,6 +125,12 @@ class SettingsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateSoundVolume(double volume) async {
+    _soundVolume = volume;
+    await _storageService.setSoundVolume(volume);
+    notifyListeners();
+  }
+
   Future<void> updateSelectedSound(String sound) async {
     _selectedSound = sound;
     await _storageService.setSelectedSound(sound);
@@ -144,7 +153,7 @@ class SettingsViewModel extends ChangeNotifier {
       // Play the cached sound
       final soundSource = _soundCache[sound];
       if (soundSource != null) {
-        _previewSoloud!.play(soundSource);
+        _previewSoloud!.play(soundSource, volume: _soundVolume);
       }
     } catch (e) {
       // Silently ignore preview errors
