@@ -58,8 +58,13 @@ class KeyboardViewModel extends ChangeNotifier {
   };
 
   KeyboardViewModel(this._keyboardService, this._storageService) {
-    _initializeAudioPool();
-    _loadSoundPreferences();
+    _init();
+  }
+
+  // Proper async initialization sequence to avoid race conditions
+  Future<void> _init() async {
+    await _initializeAudioPool();
+    await _loadSoundPreferences();
     _startConnectionMonitoring();
   }
 
@@ -114,8 +119,6 @@ class KeyboardViewModel extends ChangeNotifier {
   Future<void> _loadSoundPreferences() async {
     _soundEnabled = await _storageService.getSoundEnabled();
     _selectedSound = await _storageService.getSelectedSound();
-    // Pre-load the selected sound into all pool players
-    await _preloadSound(_selectedSound);
     notifyListeners();
   }
 
@@ -128,8 +131,6 @@ class KeyboardViewModel extends ChangeNotifier {
   Future<void> updateSelectedSound(String sound) async {
     _selectedSound = sound;
     await _storageService.setSelectedSound(sound);
-    // Pre-load new sound into all pool players for instant playback
-    await _preloadSound(sound);
     notifyListeners();
   }
 
@@ -215,16 +216,7 @@ class KeyboardViewModel extends ChangeNotifier {
     _audioPoolInitialized = true;
   }
 
-  // Pre-load sound into all pool players for instant playback
-  Future<void> _preloadSound(String soundFile) async {
-    if (!_audioPoolInitialized) return;
 
-    final source = AssetSource('sounds/$soundFile');
-    for (var player in _audioPool) {
-      // Pre-load the audio source into each player
-      await player.setSource(source);
-    }
-  }
 
   void _playSound() {
     if (!_soundEnabled || !_audioPoolInitialized) return;
@@ -232,8 +224,12 @@ class KeyboardViewModel extends ChangeNotifier {
     // Use round-robin player from pool (like instrument apps)
     final player = _audioPool[_currentPlayerIndex];
 
-    // Play immediately - player is already loaded and ready
-    player.resume();
+    // Use play() not resume() - play() resets position and handles state transitions
+    // lowLatency mode internally caches small assets, no manual preload needed
+    player.play(
+      AssetSource('sounds/$_selectedSound'),
+      mode: PlayerMode.lowLatency,
+    );
 
     // Move to next player in pool for next sound (allows overlapping)
     _currentPlayerIndex = (_currentPlayerIndex + 1) % _audioPoolSize;
