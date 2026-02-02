@@ -129,14 +129,14 @@ class SettingsViewModel extends ChangeNotifier {
 
   Future<void> playPreview(String sound) async {
     if (_previewPool == null) return;
-    
+
     try {
       // Load sound if not cached
       if (!_soundCache.containsKey(sound)) {
         final asset = await rootBundle.load('assets/sounds/$sound');
         _soundCache[sound] = await _previewPool!.load(asset);
       }
-      
+
       // Play the cached sound
       final soundId = _soundCache[sound];
       if (soundId != null) {

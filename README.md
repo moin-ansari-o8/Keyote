@@ -1,303 +1,65 @@
-# 🎹 Keyote — USB Tethering Remote Keyboard
+# Keyote
 
-> **Transform your phone into a wireless keyboard for your laptop. No drivers. No root. No chaos.**
+Turn your Android phone into a remote keyboard for your laptop using USB tethering. No internet required, no complex setup.
 
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)]()
-[![Android](https://img.shields.io/badge/Android-Flutter-02569B)]()
-[![Python](https://img.shields.io/badge/Python-3.10%2B-green)]()
-[![License](https://img.shields.io/badge/License-MIT-yellow)]()
+## What It Does
 
----
-
-## 📋 Table of Contents
-
-- [Concept](#-concept)
-- [Architecture](#-architecture)
-- [Why This Approach Wins](#-why-this-approach-wins)
-- [Project Structure](#-project-structure)
-- [System Requirements](#-system-requirements)
-- [Agent Prompts](#-agent-prompts)
-  - [Laptop Server Prompt](#1-laptop-server--python)
-  - [Flutter App Prompt](#2-flutter-app--android)
-- [Setup & Usage](#-setup--usage)
-- [API Specification](#-api-specification)
-- [Future Roadmap](#-future-roadmap)
-- [Professional Recommendations](#-professional-recommendations)
-- [Troubleshooting](#-troubleshooting)
-
----
-
-## 🎯 Concept
-
-**Keyote is not a Bluetooth keyboard. It's a command tunnel.**
-
-### Mental Model
+Keyote lets you control your laptop's keyboard from your phone over a USB connection. The phone runs a Flutter app with a virtual keyboard, and the laptop runs a Python server that simulates keystrokes.
 
 ```
-Phone (Flutter App)          Laptop (Python Server)
-┌─────────────────┐         ┌──────────────────────┐
-│                 │         │                      │
-│  Remote Control │────────▶│  Local Key Executor  │
-│   (HTTP Client) │  USB    │   (Event Injector)   │
-│                 │ Tethering│                      │
-└─────────────────┘         └──────────────────────┘
+Phone (Flutter App)  --(USB Tethering)-->  Laptop (Python Server)
+      Keyboard UI                          Keyboard Simulation
 ```
 
-### How It Works
+## How It Works
 
-1. **USB Cable** → Phone connects to laptop via USB
-2. **USB Tethering** → Creates private network (`192.168.x.x`)
-3. **Flutter App** → Sends key commands via HTTP POST
-4. **Python Server** → Receives commands on local network
-5. **OS Injection** → Simulates real keyboard events using `pynput`
+1. Connect phone to laptop via USB cable
+2. Enable USB tethering on phone
+3. Start Python server on laptop
+4. Connect from phone app using laptop's IP
+5. Type on phone, characters appear on laptop
 
-**Deterministic. Reliable. Cross-platform.**
+## System Requirements
 
----
+**Laptop:**
+- Windows 10/11, Linux, or macOS
+- Python 3.10+
+- USB port
 
-## 🏗️ Architecture
+**Phone:**
+- Android 8.0+
+- USB tethering support
 
-### System Flow Diagram
+## Setup
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                     KEYOTE SYSTEM                        │
-└──────────────────────────────────────────────────────────┘
+**Laptop Server:**
 
-┌─────────────────┐                    ┌──────────────────┐
-│                 │                    │                  │
-│  PHONE LAYER    │                    │  LAPTOP LAYER    │
-│                 │                    │                  │
-│ ┌─────────────┐ │                    │ ┌──────────────┐ │
-│ │   UI Layer  │ │                    │ │ HTTP Server  │ │
-│ │  (Flutter)  │ │                    │ │ (Flask/Fast) │ │
-│ └──────┬──────┘ │                    │ └──────┬───────┘ │
-│        │        │                    │        │         │
-│ ┌──────▼──────┐ │                    │ ┌──────▼───────┐ │
-│ │HTTP Client  │ │  JSON over USB     │ │Event Handler │ │
-│ │  (async)    │◄├───────────────────▶├─│  (pynput)    │ │
-│ └─────────────┘ │   Tethering        │ └──────┬───────┘ │
-│                 │   (192.168.x.x)    │        │         │
-└─────────────────┘                    │ ┌──────▼───────┐ │
-                                       │ │  OS Keyboard │ │
-                                       │ │   Injection  │ │
-                                       │ └──────────────┘ │
-                                       └──────────────────┘
+```bash
+cd laptop-server
+pip install -r requirements.txt
+python server.py
 ```
 
-### Key Design Principles
+The server will display your laptop's IP address (e.g., 192.168.42.10).
 
-- **Boring Tech** = Reliable tech (HTTP over WebSocket for v1)
-- **Offline-first** = No internet dependency
-- **Zero-config** = Minimal setup friction
-- **Single responsibility** = Phone sends, laptop executes
-- **Fail-safe** = Graceful degradation on network issues
+**Phone App:**
 
----
+1. Install APK from releases or build from source
+2. Connect phone to laptop via USB
+3. Enable USB tethering in phone settings
+4. Open Keyote app
+5. Enter laptop IP and port (default 5000)
+6. Tap Connect
 
-## 🏆 Why This Approach Wins
-
-### vs USB HID Emulation
-
-| Feature | Network Method (Keyote) | USB HID |
-|---------|------------------------|---------|
-| **Setup Complexity** | ✅ Minimal | ❌ Driver hell |
-| **Cross-platform** | ✅ Works everywhere | ❌ OS-specific |
-| **Development Speed** | ✅ Fast | ❌ Slow |
-| **Debugging** | ✅ HTTP logs | ❌ Binary protocols |
-| **Scalability** | ✅ Easy extensions | ❌ Limited |
-| **Admin Required** | ✅ No | ❌ Often yes |
-
-**Engineers choose boring, reliable tech. Boring = powerful.**
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 keyote/
-├── README.md                 # This file
-├── laptop-server/            # Python server (local executor)
-│   ├── server.py            # Main HTTP server
-│   ├── requirements.txt     # Python dependencies
-│   ├── config.json          # Server configuration
-│   └── README.md            # Server-specific docs
-│
-└── keyote-apk/              # Flutter app (remote control)
-    ├── lib/
-    │   ├── main.dart        # App entry
-    │   ├── models/          # Data models
-    │   ├── services/        # HTTP client, storage
-    │   ├── viewmodels/      # MVVM logic
-    │   └── views/           # UI screens
-    ├── pubspec.yaml
-    └── README.md            # App-specific docs
-```
-
----
-
-## 💻 System Requirements
-
-### Laptop Server
-
-- **OS**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 11+
-- **Python**: 3.10 or higher
-- **RAM**: 50 MB (minimal footprint)
-- **Network**: USB tethering support
-- **Privileges**: No admin required
-
-### Phone App
-
-- **OS**: Android 8.0+ (API 26+)
-- **Storage**: ~15 MB
-- **Permissions**: Internet (local network only)
-- **USB**: Tethering capability (99% devices)
-
----
-
-## 🤖 Agent Prompts
-
-> **These are production-ready prompts for AI coding agents. Copy, paste, and build.**
-
-### 1️⃣ Laptop Server — Python
-
-```
-You are a senior Python systems engineer with expertise in network services and OS-level automation.
-
-=== GOAL ===
-Build a lightweight, production-grade HTTP server that receives keyboard commands from a mobile app over USB tethering and simulates real keyboard input on the host laptop.
-
-=== ENVIRONMENT ===
-- Primary Platform: Windows 10/11
-- Secondary Support: Linux, macOS
-- Python Version: 3.10+
-- Network: Local only (USB tethering)
-- Privileges: Standard user (no admin)
-- Deployment: Offline-capable
-
-=== TECHNICAL REQUIREMENTS ===
-
-1. HTTP Framework:
-   - Use FastAPI (preferred) or Flask
-   - Async request handling
-   - CORS enabled for local network
-   - Auto-reload in dev mode
-
-2. Server Configuration:
-   - Host: 0.0.0.0 (bind all interfaces)
-   - Port: 5000 (configurable via config.json)
-   - Timeout: 30s for idle connections
-   - Max payload: 1 KB
-
-3. API Endpoints:
-
-   POST /key
-   - Accept JSON payload:
-     {
-       "key": "a",           // single char or special key name
-       "ctrl": false,        // boolean
-       "shift": false,       // boolean
-       "alt": false,         // boolean
-       "repeat": 1           // optional, default 1
-     }
-   - Response: {"status": "ok", "key": "a"}
-   - Error handling: 400 for invalid keys, 500 for injection failures
-
-   GET /health
-   - Response: {"status": "running", "version": "1.0.0"}
-   - Used for connectivity checks
-
-   GET /info
-   - Response: {"os": "Windows", "ip": "192.168.42.10", "port": 5000}
-   - Helps with debugging
-
-4. Keyboard Simulation:
-   - Library: pynput
-   - Support key types:
-     * Letters: a-z (case-sensitive via shift)
-     * Numbers: 0-9
-     * Symbols: all standard keyboard symbols
-     * Special keys: enter, backspace, delete, tab, escape, space
-     * Arrow keys: up, down, left, right
-     * Function keys: f1-f12
-     * Modifiers: ctrl, alt, shift (combinable)
-   - Timing: 10ms delay between repeated keys
-   - Error handling: Log failed injections, don't crash
-
-5. Logging:
-   - Console output: timestamp, IP, key, modifiers
-   - Format: [2026-02-01 14:30:15] 192.168.42.5 → Key: 'a', Ctrl: False
-   - Log level: INFO (configurable to DEBUG)
-   - No file logging by default (optional feature)
-
-6. Configuration:
-   - File: config.json
-   - Structure:
-     {
-       "port": 5000,
-       "host": "0.0.0.0",
-       "log_level": "INFO",
-       "allowed_ips": []  // empty = allow all local
-     }
-   - Auto-create if missing with defaults
-
-7. Code Quality:
-   - Single file: server.py (< 300 lines)
-   - Type hints throughout
-   - Docstrings for functions
-   - Error handling: try-except on all I/O
-   - Clean shutdown on Ctrl+C
-
-8. Security:
-   - Validate JSON schema strictly
-   - Reject payloads > 1 KB
-   - Rate limiting: 100 req/sec per IP (optional v2)
-   - Only bind to local network interfaces
-
-=== DELIVERABLES ===
-
-1. server.py (production code, no comments except docstrings)
-2. requirements.txt (pinned versions)
-3. config.json (default configuration)
-4. README.md (installation + usage)
-
-=== INSTALLATION INSTRUCTIONS FORMAT ===
-
-# Installation
-pip install -r requirements.txt
-
-# Run Server
-python server.py
-
-# Get Laptop IP
-ipconfig         # Windows
-ifconfig         # Linux/Mac
-
-# Expected Output
-Server running on http://0.0.0.0:5000
-Laptop IP: 192.168.42.10
-Waiting for connections...
-
-=== OUTPUT REQUIREMENTS ===
-- Only clean production code
-- No explanatory text outside code
-- No placeholder comments like "# TODO"
-- Follow PEP 8 strictly
-- Use f-strings for formatting
-- Async where beneficial
-
-=== TESTING CHECKLIST ===
-After generation, verify:
-1. Server starts without errors
-2. /health returns 200
-3. POST /key with {"key": "a"} types 'a'
-4. Ctrl+C shuts down gracefully
-5. Invalid JSON returns 400
-```
-
----
-
-### 2️⃣ Flutter App — Android
+├── laptop-server/     # Python HTTP server
+│   ├── server.py      # Main server
+│   └── dashboard.py   # GUI dashboard
+└── keyote_apk/        # Flutter Android app
+    └── lib/           # App source code
 
 ```
 You are a senior Flutter developer specializing in mobile applications with clean architecture and high-performance networking.

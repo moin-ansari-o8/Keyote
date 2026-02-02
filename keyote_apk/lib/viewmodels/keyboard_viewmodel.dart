@@ -129,13 +129,13 @@ class KeyboardViewModel extends ChangeNotifier {
   Future<void> updateSelectedSound(String sound) async {
     _selectedSound = sound;
     await _storageService.setSelectedSound(sound);
-    
+
     // Reload soundpool with new sound
     if (_audioInitialized && _soundpool != null) {
       final asset = await rootBundle.load('assets/sounds/$_selectedSound');
       _soundId = await _soundpool!.load(asset);
     }
-    
+
     notifyListeners();
   }
 
