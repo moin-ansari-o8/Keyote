@@ -391,7 +391,7 @@ class SplitKeyboardLayout extends StatelessWidget {
           ),
           ArrowKey(
             icon: Icons.keyboard_arrow_up,
-            onPressed: () => vm.sendKey('Up'),
+            onPressed: () => vm.sendSpecialKey('Up'),
           ),
         ],
       ),
@@ -420,15 +420,15 @@ class SplitKeyboardLayout extends StatelessWidget {
           ),
           ArrowKey(
             icon: Icons.keyboard_arrow_left,
-            onPressed: () => vm.sendKey('Left'),
+            onPressed: () => vm.sendSpecialKey('Left'),
           ),
           ArrowKey(
             icon: Icons.keyboard_arrow_down,
-            onPressed: () => vm.sendKey('Down'),
+            onPressed: () => vm.sendSpecialKey('Down'),
           ),
           ArrowKey(
             icon: Icons.keyboard_arrow_right,
-            onPressed: () => vm.sendKey('Right'),
+            onPressed: () => vm.sendSpecialKey('Right'),
           ),
         ],
       ),

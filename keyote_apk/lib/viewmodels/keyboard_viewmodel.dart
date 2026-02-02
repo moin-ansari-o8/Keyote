@@ -11,6 +11,12 @@ class KeyboardViewModel extends ChangeNotifier {
   final KeyboardService _keyboardService;
   final StorageService _storageService;
 
+  // Audio pool for zero-latency sound effects (like instrument/game apps)
+  static const int _audioPoolSize = 5; // Pool of 5 pre-loaded players
+  final List<AudioPlayer> _audioPool = [];
+  int _currentPlayerIndex = 0;
+  bool _audioPoolInitialized = false;
+
   bool _ctrlPressed = false;
   bool _shiftPressed = false;
   bool _altPressed = false;
@@ -52,6 +58,7 @@ class KeyboardViewModel extends ChangeNotifier {
   };
 
   KeyboardViewModel(this._keyboardService, this._storageService) {
+    _initializeAudioPool();
     _loadSoundPreferences();
     _startConnectionMonitoring();
   }
@@ -61,6 +68,11 @@ class KeyboardViewModel extends ChangeNotifier {
     _connectionCheckTimer?.cancel();
     _debounceTimer?.cancel();
     _repeatTimer?.cancel();
+    // Dispose all players in pool
+    for (var player in _audioPool) {
+      player.dispose();
+    }
+    _audioPool.clear();
     super.dispose();
   }
 
@@ -102,6 +114,8 @@ class KeyboardViewModel extends ChangeNotifier {
   Future<void> _loadSoundPreferences() async {
     _soundEnabled = await _storageService.getSoundEnabled();
     _selectedSound = await _storageService.getSelectedSound();
+    // Pre-load the selected sound into all pool players
+    await _preloadSound(_selectedSound);
     notifyListeners();
   }
 
@@ -114,6 +128,8 @@ class KeyboardViewModel extends ChangeNotifier {
   Future<void> updateSelectedSound(String sound) async {
     _selectedSound = sound;
     await _storageService.setSelectedSound(sound);
+    // Pre-load new sound into all pool players for instant playback
+    await _preloadSound(sound);
     notifyListeners();
   }
 
@@ -182,25 +198,45 @@ class KeyboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _playSound() {
-    if (!_soundEnabled) return;
+  // Initialize audio pool with pre-loaded players for instant playback
+  Future<void> _initializeAudioPool() async {
+    if (_audioPoolInitialized) return;
 
-    // ROOT CAUSE FIX: Create a new AudioPlayer for each sound
-    // Reusing a single player causes state conflicts with rapid key presses
-    // This is the recommended pattern for sound effects (not background music)
-    final player = AudioPlayer();
-    player.play(
-      AssetSource('sounds/$_selectedSound'),
-      mode: PlayerMode.lowLatency,
-      volume: 1.0,
-    ).then((_) {
-      // Auto-dispose after playing to free resources
-      Future.delayed(const Duration(milliseconds: 500), () {
-        player.dispose();
-      });
-    }).catchError((_) {
-      player.dispose();
-    });
+    // Create pool of players
+    for (int i = 0; i < _audioPoolSize; i++) {
+      final player = AudioPlayer();
+      // Set to low latency mode
+      await player.setPlayerMode(PlayerMode.lowLatency);
+      // Set release mode to stop (resets to beginning when finished)
+      await player.setReleaseMode(ReleaseMode.stop);
+      _audioPool.add(player);
+    }
+
+    _audioPoolInitialized = true;
+  }
+
+  // Pre-load sound into all pool players for instant playback
+  Future<void> _preloadSound(String soundFile) async {
+    if (!_audioPoolInitialized) return;
+
+    final source = AssetSource('sounds/$soundFile');
+    for (var player in _audioPool) {
+      // Pre-load the audio source into each player
+      await player.setSource(source);
+    }
+  }
+
+  void _playSound() {
+    if (!_soundEnabled || !_audioPoolInitialized) return;
+
+    // Use round-robin player from pool (like instrument apps)
+    final player = _audioPool[_currentPlayerIndex];
+    
+    // Play immediately - player is already loaded and ready
+    player.resume();
+    
+    // Move to next player in pool for next sound (allows overlapping)
+    _currentPlayerIndex = (_currentPlayerIndex + 1) % _audioPoolSize;
   }
 
   void sendKey(String key, {bool? ctrl, bool? shift, bool? alt, bool? win}) {

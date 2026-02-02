@@ -30,21 +30,29 @@ Generated: 2026-02-02
 [updated] Implement sound override (stop previous sound on new key press)
 [updated] Add 3 key press sounds with preview functionality
 [updated] Remove speaker icon from keyboard header
+[tested] Add cursor position tracking in input preview
+[tested] Implement Left/Right arrow cursor movement in preview
+[tested] Implement Ctrl+Left/Right word jump in preview
+[tested] Fix arrow keys to call sendSpecialKey (not sendKey)
+[tested] Fix Delete key to call sendSpecialKey
+[tested] Display Up/Down/Home/End as {KeyName} in preview
 [tested] Final testing on device
 
 ## Sound System Implementation (Completed)
 - Added 3 sound options: Click, Mechanical One (default), Mechanical Two
-- Fixed ROOT CAUSE: Single AudioPlayer state conflicts with rapid key presses
-- Solution: Create fresh AudioPlayer instance for each sound, auto-dispose after playing
-- This is the correct pattern for sound effects (not background music)
-- Every key press now plays sound reliably (previously only first key worked)
+- Implemented ZERO-LATENCY audio pool pattern (like instrument/game apps)
+- Pre-initialized pool of 5 AudioPlayer instances on app start
+- Pre-loaded sound sources using setSource() - no loading delay
+- Round-robin player selection with resume() for instant playback
+- Supports overlapping sounds naturally (multiple simultaneous key presses)
+- No delay, no lag - instant sound feedback like professional apps
 - Added sound preview when selecting sound type in settings
 - Added visual feedback in dropdown (checkmark on selected sound)
 - Sound preferences persist using SharedPreferences
 - Settings UI with toggle switch and dropdown for sound selection
 - Removed redundant _playKeySound calls from split_keyboard_layout.dart
 - Centralized all sound logic in KeyboardViewModel._playSound()
-- All keys now properly trigger sound through sendKey/sendCharacter methods
+- All keys trigger sound through sendKey/sendCharacter methods
 
 ## Progress Notes
 - Starting complete keyboard redesign

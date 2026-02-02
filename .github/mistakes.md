@@ -17,8 +17,8 @@ _Lesson:_ dev_dependencies are for development tools only; runtime packages must
 _Related Files:_ pubspec.yaml
 
 ## 2026-02-02 - AudioPlayer State Management for Rapid Key Presses
-_Problem:_ Only first key press produced sound, subsequent rapid key presses were silent. Tried using single AudioPlayer with stop() + play() but stop() is async and creates state conflicts
-_Root Cause:_ AudioPlayer is stateful - calling stop() returns a Future but we called play() immediately without awaiting, causing the player to be in a "stopping" state when play() was called. This made the second and subsequent plays fail silently
-_Solution:_ Create a NEW AudioPlayer instance for each sound effect and auto-dispose after playing. This is the recommended pattern for sound effects (vs reusing players for background music)
-_Lesson:_ For sound effects with rapid/overlapping playback, create fresh AudioPlayer instances rather than reusing one. Single player reuse works for background music but not for sound effects. Never call async methods without awaiting when their completion affects subsequent calls
-_Related Files:_ keyboard_viewmodel.dart (_playSound method)
+_Problem:_ Only first key press produced sound, subsequent rapid key presses were silent. Tried using single AudioPlayer with stop() + play() but stop() is async and creates state conflicts. Second attempt: creating new AudioPlayer per sound worked but had significant delay/latency
+_Root Cause:_ Creating new AudioPlayer() for each key press has initialization overhead. Loading AssetSource each time adds I/O latency. Not suitable for rapid sound effects like keyboard typing or instrument apps
+_Solution:_ Implemented audio pool pattern (used by games/instrument apps): Pre-initialize 5 AudioPlayer instances, pre-load sound source into all players using setSource(), use round-robin pattern with resume() for instant playback, zero initialization/loading overhead
+_Lesson:_ For low-latency sound effects: (1) Pre-initialize player pool on app start, (2) Pre-load audio sources, (3) Use resume() not play(), (4) Round-robin through pool for overlapping sounds. Never create AudioPlayer on-demand for time-critical audio. Study existing instrument/game apps for sound effect patterns
+_Related Files:_ keyboard_viewmodel.dart (_initializeAudioPool, _preloadSound, _playSound methods)
