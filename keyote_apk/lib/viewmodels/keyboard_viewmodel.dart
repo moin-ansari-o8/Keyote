@@ -10,7 +10,6 @@ import '../utils/constants.dart';
 class KeyboardViewModel extends ChangeNotifier {
   final KeyboardService _keyboardService;
   final StorageService _storageService;
-  final AudioPlayer _audioPlayer = AudioPlayer();
 
   bool _ctrlPressed = false;
   bool _shiftPressed = false;
@@ -22,6 +21,7 @@ class KeyboardViewModel extends ChangeNotifier {
   String _selectedSound = AppConstants.defaultSound;
   bool _isConnected = false;
   String _inputPreview = '';
+  int _cursorPosition = 0;
   Timer? _debounceTimer;
   Timer? _repeatTimer;
   Timer? _connectionCheckTimer;
@@ -61,7 +61,6 @@ class KeyboardViewModel extends ChangeNotifier {
     _connectionCheckTimer?.cancel();
     _debounceTimer?.cancel();
     _repeatTimer?.cancel();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -80,8 +79,10 @@ class KeyboardViewModel extends ChangeNotifier {
       if (!_isConnected) {
         resetModifiers();
         _inputPreview = 'Connect to server first...';
+        _cursorPosition = 0;
       } else {
         _inputPreview = '';
+        _cursorPosition = 0;
       }
       notifyListeners();
     }
@@ -96,6 +97,7 @@ class KeyboardViewModel extends ChangeNotifier {
   String get selectedSound => _selectedSound;
   bool get isConnected => _isConnected;
   String get inputPreview => _inputPreview;
+  int get cursorPosition => _cursorPosition;
 
   Future<void> _loadSoundPreferences() async {
     _soundEnabled = await _storageService.getSoundEnabled();
@@ -117,6 +119,7 @@ class KeyboardViewModel extends ChangeNotifier {
 
   void clearInputPreview() {
     _inputPreview = '';
+    _cursorPosition = 0;
     notifyListeners();
   }
 
@@ -182,17 +185,22 @@ class KeyboardViewModel extends ChangeNotifier {
   void _playSound() {
     if (!_soundEnabled) return;
 
-    // Stop previous sound to prevent overlap and ensure every key press is heard
-    _audioPlayer.stop();
-
-    // Play selected sound with low latency mode for instant response
-    _audioPlayer
-        .play(
-          AssetSource('sounds/$_selectedSound'),
-          mode: PlayerMode.lowLatency,
-          volume: 1.0,
-        )
-        .catchError((_) {});
+    // ROOT CAUSE FIX: Create a new AudioPlayer for each sound
+    // Reusing a single player causes state conflicts with rapid key presses
+    // This is the recommended pattern for sound effects (not background music)
+    final player = AudioPlayer();
+    player.play(
+      AssetSource('sounds/$_selectedSound'),
+      mode: PlayerMode.lowLatency,
+      volume: 1.0,
+    ).then((_) {
+      // Auto-dispose after playing to free resources
+      Future.delayed(const Duration(milliseconds: 500), () {
+        player.dispose();
+      });
+    }).catchError((_) {
+      player.dispose();
+    });
   }
 
   void sendKey(String key, {bool? ctrl, bool? shift, bool? alt, bool? win}) {
@@ -268,10 +276,16 @@ class KeyboardViewModel extends ChangeNotifier {
       char = keyId;
     }
 
-    // Update input preview without notifying yet
-    _inputPreview += char;
+    // Insert character at cursor position
+    _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+        char +
+        _inputPreview.substring(_cursorPosition);
+    _cursorPosition++;
+    
     if (_inputPreview.length > 100) {
-      _inputPreview = _inputPreview.substring(_inputPreview.length - 100);
+      final overflow = _inputPreview.length - 100;
+      _inputPreview = _inputPreview.substring(overflow);
+      _cursorPosition = (_cursorPosition - overflow).clamp(0, 100);
     }
 
     // Send key first, then notify once
@@ -291,10 +305,16 @@ class KeyboardViewModel extends ChangeNotifier {
       char = keyId;
     }
 
-    // Update input preview
-    _inputPreview += char;
+    // Insert at cursor position
+    _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+        char +
+        _inputPreview.substring(_cursorPosition);
+    _cursorPosition++;
+    
     if (_inputPreview.length > 100) {
-      _inputPreview = _inputPreview.substring(_inputPreview.length - 100);
+      final overflow = _inputPreview.length - 100;
+      _inputPreview = _inputPreview.substring(overflow);
+      _cursorPosition = (_cursorPosition - overflow).clamp(0, 100);
     }
     notifyListeners();
 
@@ -304,49 +324,204 @@ class KeyboardViewModel extends ChangeNotifier {
   void sendSpecialKey(String key) {
     if (!_isConnected) return;
 
-    if (key == 'Backspace' && _inputPreview.isNotEmpty) {
-      // If Ctrl is pressed, delete whole word (like Ctrl+Backspace)
+    // Handle Left arrow - move cursor left
+    if (key == 'Left') {
       if (_ctrlPressed) {
-        // Find last word boundary
-        final trimmed = _inputPreview.trimRight();
-        final lastSpace = trimmed.lastIndexOf(' ');
-        final lastNewline = trimmed.lastIndexOf('\n');
-        final lastTab = trimmed.lastIndexOf('\t');
-        final boundary = [
-          lastSpace,
-          lastNewline,
-          lastTab,
-        ].reduce((a, b) => a > b ? a : b);
-
-        if (boundary >= 0) {
-          _inputPreview = _inputPreview.substring(0, boundary + 1);
-        } else {
-          _inputPreview = '';
-        }
+        // Ctrl+Left: jump to previous word start
+        _cursorPosition = _findPreviousWordBoundary();
       } else {
-        _inputPreview = _inputPreview.substring(0, _inputPreview.length - 1);
+        // Simple left movement
+        if (_cursorPosition > 0) {
+          _cursorPosition--;
+        }
       }
-    } else if (key == 'Return' || key == 'Enter') {
-      _inputPreview += '\n';
-    } else if (key == 'Tab') {
-      // Show key combination text when modifiers are active
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // Handle Right arrow - move cursor right
+    if (key == 'Right') {
+      if (_ctrlPressed) {
+        // Ctrl+Right: jump to next word end
+        _cursorPosition = _findNextWordBoundary();
+      } else {
+        // Simple right movement
+        if (_cursorPosition < _inputPreview.length) {
+          _cursorPosition++;
+        }
+      }
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // Handle Backspace - delete character before cursor
+    if (key == 'Backspace') {
+      if (_ctrlPressed && _cursorPosition > 0) {
+        // Ctrl+Backspace: delete word before cursor
+        final prevBoundary = _findPreviousWordBoundary();
+        _inputPreview = _inputPreview.substring(0, prevBoundary) +
+            _inputPreview.substring(_cursorPosition);
+        _cursorPosition = prevBoundary;
+      } else if (_cursorPosition > 0) {
+        // Normal backspace: delete one character before cursor
+        _inputPreview = _inputPreview.substring(0, _cursorPosition - 1) +
+            _inputPreview.substring(_cursorPosition);
+        _cursorPosition--;
+      }
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // Handle Delete key - delete character at cursor
+    if (key == 'Delete') {
+      if (_cursorPosition < _inputPreview.length) {
+        _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+            _inputPreview.substring(_cursorPosition + 1);
+      }
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // Handle Home - move cursor to start
+    if (key == 'Home') {
+      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+          ' {Home} ' +
+          _inputPreview.substring(_cursorPosition);
+      _cursorPosition += 8; // Length of " {Home} "
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // Handle End - move cursor to end
+    if (key == 'End') {
+      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+          ' {End} ' +
+          _inputPreview.substring(_cursorPosition);
+      _cursorPosition += 7; // Length of " {End} "
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // Handle Up/Down arrows - show as special keys
+    if (key == 'Up') {
+      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+          ' {Up} ' +
+          _inputPreview.substring(_cursorPosition);
+      _cursorPosition += 6; // Length of " {Up} "
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    if (key == 'Down') {
+      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+          ' {Down} ' +
+          _inputPreview.substring(_cursorPosition);
+      _cursorPosition += 8; // Length of " {Down} "
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // Handle Enter/Return
+    if (key == 'Return' || key == 'Enter') {
+      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+          '\n' +
+          _inputPreview.substring(_cursorPosition);
+      _cursorPosition++;
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // Handle Tab
+    if (key == 'Tab') {
       if (_ctrlPressed || _altPressed || _winPressed) {
+        // Show key combination text when modifiers are active
         List<String> parts = [];
         if (_ctrlPressed) parts.add('Ctrl');
         if (_altPressed) parts.add('Alt');
         if (_winPressed) parts.add('Win');
         parts.add('Tab');
-        _inputPreview += ' {${parts.join('+')}} ';
+        final tabText = ' {${parts.join('+')}} ';
+        _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+            tabText +
+            _inputPreview.substring(_cursorPosition);
+        _cursorPosition += tabText.length;
       } else {
-        _inputPreview += '\t';
+        _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+            '\t' +
+            _inputPreview.substring(_cursorPosition);
+        _cursorPosition++;
       }
-    } else if (key == ' ') {
-      _inputPreview += ' ';
+      notifyListeners();
+      sendKey(key);
+      return;
     }
 
-    // Notify once after all updates
+    // Handle Space
+    if (key == ' ') {
+      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+          ' ' +
+          _inputPreview.substring(_cursorPosition);
+      _cursorPosition++;
+      notifyListeners();
+      sendKey(key);
+      return;
+    }
+
+    // For any other special key, just send it
     notifyListeners();
     sendKey(key);
+  }
+
+  // Helper: Find previous word boundary for Ctrl+Left/Ctrl+Backspace
+  int _findPreviousWordBoundary() {
+    if (_cursorPosition == 0) return 0;
+
+    int pos = _cursorPosition - 1;
+
+    // Skip whitespace before cursor
+    while (pos > 0 && _isWhitespace(_inputPreview[pos])) {
+      pos--;
+    }
+
+    // Find start of word
+    while (pos > 0 && !_isWhitespace(_inputPreview[pos - 1])) {
+      pos--;
+    }
+
+    return pos;
+  }
+
+  // Helper: Find next word boundary for Ctrl+Right
+  int _findNextWordBoundary() {
+    if (_cursorPosition >= _inputPreview.length) return _inputPreview.length;
+
+    int pos = _cursorPosition;
+
+    // Skip whitespace after cursor
+    while (pos < _inputPreview.length && _isWhitespace(_inputPreview[pos])) {
+      pos++;
+    }
+
+    // Find end of word
+    while (pos < _inputPreview.length && !_isWhitespace(_inputPreview[pos])) {
+      pos++;
+    }
+
+    return pos;
+  }
+
+  // Helper: Check if character is whitespace
+  bool _isWhitespace(String char) {
+    return char == ' ' || char == '\t' || char == '\n';
   }
 
   bool _isAlpha(String key) {

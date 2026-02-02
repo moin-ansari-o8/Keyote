@@ -34,8 +34,10 @@ Generated: 2026-02-02
 
 ## Sound System Implementation (Completed)
 - Added 3 sound options: Click, Mechanical One (default), Mechanical Two
-- Implemented AudioPlayer.stop() before play() to fix silent keys issue
-- Sound now plays for EVERY key press (previously only first key worked)
+- Fixed ROOT CAUSE: Single AudioPlayer state conflicts with rapid key presses
+- Solution: Create fresh AudioPlayer instance for each sound, auto-dispose after playing
+- This is the correct pattern for sound effects (not background music)
+- Every key press now plays sound reliably (previously only first key worked)
 - Added sound preview when selecting sound type in settings
 - Added visual feedback in dropdown (checkmark on selected sound)
 - Sound preferences persist using SharedPreferences

@@ -82,36 +82,68 @@ class _KeyboardScreenState extends State<KeyboardScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(
-                                      !keyboardVm.isConnected
-                                          ? 'CONNECT TO SERVER..!'
-                                          : (keyboardVm.inputPreview.isEmpty
-                                                ? 'Type something...'
-                                                : keyboardVm.inputPreview),
-                                      style: TextStyle(
-                                        color:
-                                            !keyboardVm.isConnected ||
-                                                keyboardVm.inputPreview.isEmpty
-                                            ? Colors.grey
-                                            : Colors.white,
-                                        fontSize: 14,
-                                        fontFamily: 'monospace',
-                                        fontWeight: !keyboardVm.isConnected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.clip,
-                                    ),
-                                    // Steady cursor
-                                    if (keyboardVm.isConnected &&
-                                        keyboardVm.inputPreview.isNotEmpty)
+                                    // Show placeholder or actual text with cursor
+                                    if (!keyboardVm.isConnected)
+                                      Text(
+                                        'CONNECT TO SERVER..!',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                          fontFamily: 'monospace',
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.clip,
+                                      )
+                                    else if (keyboardVm.inputPreview.isEmpty)
+                                      Text(
+                                        'Type something...',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                          fontFamily: 'monospace',
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.clip,
+                                      )
+                                    else ...[
+                                      // Text before cursor
+                                      if (keyboardVm.cursorPosition > 0)
+                                        Text(
+                                          keyboardVm.inputPreview.substring(
+                                            0,
+                                            keyboardVm.cursorPosition,
+                                          ),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontFamily: 'monospace',
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.clip,
+                                        ),
+                                      // Cursor at position
                                       Container(
                                         width: 2,
                                         height: 16,
                                         color: Colors.white,
-                                        margin: const EdgeInsets.only(left: 1),
+                                        margin: const EdgeInsets.symmetric(horizontal: 1),
                                       ),
+                                      // Text after cursor
+                                      if (keyboardVm.cursorPosition < keyboardVm.inputPreview.length)
+                                        Text(
+                                          keyboardVm.inputPreview.substring(
+                                            keyboardVm.cursorPosition,
+                                          ),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontFamily: 'monospace',
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.clip,
+                                        ),
+                                    ],
                                   ],
                                 ),
                               ),
