@@ -136,7 +136,9 @@ class SettingsViewModel extends ChangeNotifier {
     try {
       // Load sound if not cached
       if (!_soundCache.containsKey(sound)) {
-        _soundCache[sound] = await _previewSoloud!.loadAsset('assets/sounds/$sound');
+        _soundCache[sound] = await _previewSoloud!.loadAsset(
+          'assets/sounds/$sound',
+        );
       }
 
       // Play the cached sound
