@@ -1,41 +1,181 @@
 import 'package:flutter/material.dart';
-import 'widgets/connection_indicator.dart';
+import 'package:provider/provider.dart';
+import '../viewmodels/keyboard_viewmodel.dart';
 import 'widgets/split_keyboard_layout.dart';
 
-class KeyboardScreen extends StatelessWidget {
+class KeyboardScreen extends StatefulWidget {
   const KeyboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Keyote Remote'),
-        centerTitle: true,
-        backgroundColor: Colors.black87,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.pushNamed(context, '/settings'),
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
-      body: Container(
-        color: Colors.grey[900],
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Connection indicator at top
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: const ConnectionIndicator(),
-              ),
+  State<KeyboardScreen> createState() => _KeyboardScreenState();
+}
 
-              // Keyboard takes remaining space
-              Expanded(child: Center(child: const SplitKeyboardLayout())),
-            ],
-          ),
+class _KeyboardScreenState extends State<KeyboardScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _cursorController;
+
+  @override
+  void initState() {
+    super.initState();
+    _cursorController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _cursorController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardVm = context.watch<KeyboardViewModel>();
+
+    return Scaffold(
+      backgroundColor: Colors.grey[900],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Custom header with title, input preview, and controls
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              color: Colors.black87,
+              child: Row(
+                children: [
+                  // Connection indicator dot
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: keyboardVm.isConnected ? Colors.green : Colors.red,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: keyboardVm.isConnected
+                              ? Colors.green.withOpacity(0.5)
+                              : Colors.red.withOpacity(0.5),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Title
+                  const Text(
+                    'Keyote',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Input preview box (inline)
+                  Expanded(
+                    child: Container(
+                      height: 40,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Align(
+                              alignment:
+                                  !keyboardVm.isConnected
+                                      ? Alignment.center
+                                      : Alignment.centerLeft,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      !keyboardVm.isConnected
+                                          ? 'CONNECT TO SERVER..!'
+                                          : (keyboardVm.inputPreview.isEmpty
+                                                ? 'Type something...'
+                                                : keyboardVm.inputPreview),
+                                      style: TextStyle(
+                                        color:
+                                            !keyboardVm.isConnected ||
+                                                keyboardVm.inputPreview.isEmpty
+                                            ? Colors.grey
+                                            : Colors.white,
+                                        fontSize: 14,
+                                        fontFamily: 'monospace',
+                                        fontWeight: !keyboardVm.isConnected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.clip,
+                                    ),
+                                    // Blinking cursor
+                                    if (keyboardVm.isConnected &&
+                                        keyboardVm.inputPreview.isNotEmpty)
+                                      FadeTransition(
+                                        opacity: _cursorController,
+                                        child: Container(
+                                          width: 2,
+                                          height: 16,
+                                          color: Colors.white,
+                                          margin: const EdgeInsets.only(
+                                            left: 1,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (keyboardVm.inputPreview.isNotEmpty)
+                            IconButton(
+                              icon: const Icon(
+                                Icons.clear,
+                                color: Colors.white70,
+                                size: 18,
+                              ),
+                              onPressed: keyboardVm.clearInputPreview,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Sound toggle
+                  IconButton(
+                    icon: Icon(
+                      keyboardVm.soundEnabled
+                          ? Icons.volume_up
+                          : Icons.volume_off,
+                      color: Colors.white,
+                    ),
+                    onPressed: keyboardVm.toggleSound,
+                    tooltip: 'Toggle Sound',
+                  ),
+                  // Settings button
+                  IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.white),
+                    onPressed: () => Navigator.pushNamed(context, '/settings'),
+                    tooltip: 'Settings',
+                  ),
+                ],
+              ),
+            ),
+
+            // Keyboard takes remaining space
+            Expanded(child: const SplitKeyboardLayout()),
+          ],
         ),
       ),
     );

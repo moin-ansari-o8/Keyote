@@ -17,6 +17,12 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
+  // Enable immersive full-screen mode (hide notification bar and navigation bar)
+  await SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+    overlays: [],
+  );
+
   final storageService = await StorageService.getInstance();
   final keyboardService = KeyboardService();
 

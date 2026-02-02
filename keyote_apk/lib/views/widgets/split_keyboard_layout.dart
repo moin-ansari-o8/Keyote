@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/keyboard_viewmodel.dart';
 import 'keyboard_half.dart';
 import 'keyboard_row.dart';
 import 'dual_char_key.dart';
-import 'modifier_key.dart';
+import 'modifier_key.dart' as custom;
 import 'special_key.dart';
 import 'function_key.dart';
 import 'arrow_key.dart';
@@ -14,29 +15,51 @@ import 'alpha_key.dart';
 class SplitKeyboardLayout extends StatelessWidget {
   const SplitKeyboardLayout({super.key});
 
+  void _playKeySound(KeyboardViewModel vm) {
+    if (vm.soundEnabled) {
+      SystemSound.play(SystemSoundType.click);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<KeyboardViewModel>();
-    final screenWidth = MediaQuery.of(context).size.width;
+    final size = MediaQuery.of(context).size;
+    final screenWidth = size.width;
+    final screenHeight = size.height;
 
-    // Calculate key size based on screen width
-    // Approximate: 7 keys + gaps per row = ~8x width
-    // Left half needs ~360px, center gap ~80px, right half ~370px = ~810px total
-    // Scale down if screen is smaller
-    final scaleFactor = screenWidth < 810 ? screenWidth / 810 : 1.0;
+    // Calculate responsive key size
+    // Available height minus header (56px only now, no separate preview box)
+    final availableHeight =
+        screenHeight - 56 - 5; // Header + minimal bottom padding
+    final availableWidth =
+        screenWidth - 4; // 2px padding each side (maximize space)
 
-    return Transform.scale(
-      scale: scaleFactor,
-      child: SingleChildScrollView(
+    // 6 rows with gaps, each row ~54px (50px key + 4px gap)
+    final neededHeight = 6 * 54;
+    final verticalScale = availableHeight / neededHeight;
+
+    // Width: left ~400px + center 10px + right ~400px = ~810px (minimal center gap)
+    final neededWidth = 810;
+    final horizontalScale = availableWidth / neededWidth;
+
+    // Use smaller scale factor to fit both dimensions
+    final scaleFactor =
+        (verticalScale < horizontalScale ? verticalScale : horizontalScale)
+            .clamp(0.4, 1.1);
+
+    return Center(
+      child: Transform.scale(
+        scale: scaleFactor,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Left Half
             KeyboardHalf(side: 'left', rows: _buildLeftHalf(viewModel)),
 
-            // Center Gap (80-120px)
-            const SizedBox(width: 100),
+            // Center Gap (minimal 10px)
+            const SizedBox(width: 10),
 
             // Right Half
             KeyboardHalf(side: 'right', rows: _buildRightHalf(viewModel)),
@@ -69,42 +92,70 @@ class SplitKeyboardLayout extends StatelessWidget {
             secondary: '~',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('`'),
+            onLongPress: () {
+              _playKeySound(vm);
+              vm.sendSecondaryChar('`');
+            },
           ),
           DualCharKey(
             primary: '1',
             secondary: '!',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('1'),
+            onLongPress: () {
+              _playKeySound(vm);
+              vm.sendSecondaryChar('1');
+            },
           ),
           DualCharKey(
             primary: '2',
             secondary: '@',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('2'),
+            onLongPress: () {
+              _playKeySound(vm);
+              vm.sendSecondaryChar('2');
+            },
           ),
           DualCharKey(
             primary: '3',
             secondary: '#',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('3'),
+            onLongPress: () {
+              _playKeySound(vm);
+              vm.sendSecondaryChar('3');
+            },
           ),
           DualCharKey(
             primary: '4',
             secondary: '\$',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('4'),
+            onLongPress: () {
+              _playKeySound(vm);
+              vm.sendSecondaryChar('4');
+            },
           ),
           DualCharKey(
             primary: '5',
             secondary: '%',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('5'),
+            onLongPress: () {
+              _playKeySound(vm);
+              vm.sendSecondaryChar('5');
+            },
           ),
           DualCharKey(
             primary: '6',
             secondary: '^',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('6'),
+            onLongPress: () {
+              _playKeySound(vm);
+              vm.sendSecondaryChar('6');
+            },
           ),
         ],
       ),
@@ -115,13 +166,46 @@ class SplitKeyboardLayout extends StatelessWidget {
           SpecialKey(
             label: 'Tab',
             widthMultiplier: 1.5,
-            onPressed: () => vm.sendKey('Tab'),
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendSpecialKey('Tab');
+            },
           ),
-          AlphaKey(label: 'Q', onPressed: () => vm.sendCharacter('q')),
-          AlphaKey(label: 'W', onPressed: () => vm.sendCharacter('w')),
-          AlphaKey(label: 'E', onPressed: () => vm.sendCharacter('e')),
-          AlphaKey(label: 'R', onPressed: () => vm.sendCharacter('r')),
-          AlphaKey(label: 'T', onPressed: () => vm.sendCharacter('t')),
+          AlphaKey(
+            label: 'Q',
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendCharacter('q');
+            },
+          ),
+          AlphaKey(
+            label: 'W',
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendCharacter('w');
+            },
+          ),
+          AlphaKey(
+            label: 'E',
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendCharacter('e');
+            },
+          ),
+          AlphaKey(
+            label: 'R',
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendCharacter('r');
+            },
+          ),
+          AlphaKey(
+            label: 'T',
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendCharacter('t');
+            },
+          ),
         ],
       ),
 
@@ -150,7 +234,7 @@ class SplitKeyboardLayout extends StatelessWidget {
       // Row 5: ZXCVB
       KeyboardRow(
         keys: [
-          ModifierKey(
+          custom.ModifierKey(
             label: 'Shift',
             widthMultiplier: 2.25,
             isActive: vm.shiftPressed,
@@ -167,22 +251,28 @@ class SplitKeyboardLayout extends StatelessWidget {
       // Row 6: Bottom modifiers + space
       KeyboardRow(
         keys: [
-          ModifierKey(
+          custom.ModifierKey(
             label: 'Ctrl',
             isActive: vm.ctrlPressed,
             onStateChange: (pressed) => vm.setCtrl(pressed),
           ),
-          ModifierKey(
+          custom.ModifierKey(
             label: 'Win',
             isActive: vm.winPressed,
             onStateChange: (pressed) => vm.setWin(pressed),
           ),
-          ModifierKey(
+          custom.ModifierKey(
             label: 'Alt',
             isActive: vm.altPressed,
             onStateChange: (pressed) => vm.setAlt(pressed),
           ),
-          SpaceBar(widthMultiplier: 3.0, onPressed: () => vm.sendKey(' ')),
+          SpaceBar(
+            widthMultiplier: 3.0,
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendSpecialKey(' ');
+            },
+          ),
         ],
       ),
     ];
@@ -257,7 +347,10 @@ class SplitKeyboardLayout extends StatelessWidget {
           SpecialKey(
             label: 'Backspace',
             widthMultiplier: 2.0,
-            onPressed: () => vm.sendKey('Backspace'),
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendSpecialKey('Backspace');
+            },
             enableRepeat: true,
           ),
         ],
@@ -314,7 +407,10 @@ class SplitKeyboardLayout extends StatelessWidget {
           SpecialKey(
             label: 'Enter',
             widthMultiplier: 2.0,
-            onPressed: () => vm.sendKey('Return'),
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendSpecialKey('Return');
+            },
           ),
         ],
       ),
@@ -342,7 +438,7 @@ class SplitKeyboardLayout extends StatelessWidget {
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('/'),
           ),
-          ModifierKey(
+          custom.ModifierKey(
             label: 'Shift',
             widthMultiplier: 2.75,
             isActive: vm.shiftPressed,
@@ -358,18 +454,24 @@ class SplitKeyboardLayout extends StatelessWidget {
       // Row 6: Bottom modifiers + arrows
       KeyboardRow(
         keys: [
-          SpaceBar(widthMultiplier: 3.0, onPressed: () => vm.sendKey(' ')),
-          ModifierKey(
+          SpaceBar(
+            widthMultiplier: 3.0,
+            onPressed: () {
+              _playKeySound(vm);
+              vm.sendSpecialKey(' ');
+            },
+          ),
+          custom.ModifierKey(
             label: 'Alt',
             isActive: vm.altPressed,
             onStateChange: (pressed) => vm.setAlt(pressed),
           ),
-          ModifierKey(
+          custom.ModifierKey(
             label: 'Fn',
             isActive: false,
             onStateChange: (pressed) {},
           ),
-          ModifierKey(
+          custom.ModifierKey(
             label: 'Ctrl',
             isActive: vm.ctrlPressed,
             onStateChange: (pressed) => vm.setCtrl(pressed),

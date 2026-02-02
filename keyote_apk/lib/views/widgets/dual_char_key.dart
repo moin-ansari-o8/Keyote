@@ -5,6 +5,7 @@ class DualCharKey extends StatefulWidget {
   final String secondary;
   final double widthMultiplier;
   final VoidCallback onPressed;
+  final VoidCallback? onLongPress;
   final bool shiftActive;
 
   const DualCharKey({
@@ -13,6 +14,7 @@ class DualCharKey extends StatefulWidget {
     required this.secondary,
     this.widthMultiplier = 1.0,
     required this.onPressed,
+    this.onLongPress,
     this.shiftActive = false,
   });
 
@@ -23,6 +25,7 @@ class DualCharKey extends StatefulWidget {
 class _DualCharKeyState extends State<DualCharKey>
     with SingleTickerProviderStateMixin {
   bool _isPressed = false;
+  bool _isLongPress = false;
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -46,19 +49,36 @@ class _DualCharKeyState extends State<DualCharKey>
   }
 
   void _handleTapDown(TapDownDetails details) {
-    setState(() => _isPressed = true);
+    setState(() {
+      _isPressed = true;
+      _isLongPress = false;
+    });
     _controller.forward();
   }
 
   void _handleTapUp(TapUpDetails details) {
     setState(() => _isPressed = false);
     _controller.reverse();
-    widget.onPressed();
+    // Only trigger onPressed if it wasn't a long press
+    if (!_isLongPress) {
+      widget.onPressed();
+    }
+    _isLongPress = false;
   }
 
   void _handleTapCancel() {
-    setState(() => _isPressed = false);
+    setState(() {
+      _isPressed = false;
+      _isLongPress = false;
+    });
     _controller.reverse();
+  }
+
+  void _handleLongPress() {
+    setState(() => _isLongPress = true);
+    if (widget.onLongPress != null) {
+      widget.onLongPress!();
+    }
   }
 
   @override
@@ -70,6 +90,7 @@ class _DualCharKeyState extends State<DualCharKey>
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
+      onLongPress: _handleLongPress,
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(

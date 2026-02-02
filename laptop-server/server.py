@@ -1,13 +1,17 @@
 """
 Keyote Laptop Server - HTTP Keyboard Input Receiver
 Receives keyboard commands from mobile app via USB tethering and simulates keyboard input.
+Thread-safe implementation for GUI integration.
 """
 
 import json
 import socket
 import sys
+import threading
+import logging
+import traceback
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable
 from datetime import datetime
 from contextlib import asynccontextmanager
 
@@ -18,10 +22,29 @@ from pydantic import BaseModel, Field, field_validator
 from pynput.keyboard import Controller, Key
 import uvicorn
 
+logger = logging.getLogger(__name__)
 
 VERSION = "1.0.0"
 CONFIG_FILE = Path("config.json")
 keyboard = Controller()
+
+# Global callback for logging to GUI
+_log_callback: Optional[Callable[[str], None]] = None
+
+
+def set_log_callback(callback: Callable[[str], None]):
+    """Set callback function for logging to GUI"""
+    global _log_callback
+    _log_callback = callback
+
+
+def gui_log(message: str):
+    """Send log message to GUI if callback is set"""
+    if _log_callback:
+        try:
+            _log_callback(message)
+        except Exception:
+            pass
 
 
 class KeyCommand(BaseModel):
@@ -79,6 +102,7 @@ config = Config()
 
 SPECIAL_KEYS = {
     'enter': Key.enter,
+    'return': Key.enter,
     'backspace': Key.backspace,
     'delete': Key.delete,
     'tab': Key.tab,
@@ -102,6 +126,16 @@ SPECIAL_KEYS = {
     'f1': Key.f1, 'f2': Key.f2, 'f3': Key.f3, 'f4': Key.f4,
     'f5': Key.f5, 'f6': Key.f6, 'f7': Key.f7, 'f8': Key.f8,
     'f9': Key.f9, 'f10': Key.f10, 'f11': Key.f11, 'f12': Key.f12,
+}
+
+# Modifier key mapping
+MODIFIER_KEYS = {
+    'ctrl': Key.ctrl,
+    'control': Key.ctrl,
+    'shift': Key.shift,
+    'alt': Key.alt,
+    'win': Key.cmd,
+    'cmd': Key.cmd,
 }
 
 
@@ -159,12 +193,63 @@ def get_os_name() -> str:
 
 def log_request(client_ip: str, key: str, ctrl: bool, shift: bool, alt: bool):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    modifiers = f"Ctrl: {ctrl}, Shift: {shift}, Alt: {alt}"
-    print(f"[{timestamp}] {client_ip} → Key: '{key}', {modifiers}")
+    modifiers = []
+    if ctrl:
+        modifiers.append("Ctrl")
+    if shift:
+        modifiers.append("Shift")
+    if alt:
+        modifiers.append("Alt")
+    
+    mod_str = "+".join(modifiers) if modifiers else ""
+    key_display = f"{mod_str}+{key}" if mod_str else key
+    
+    log_msg = f"Mobile → Key '{key_display}'"
+    print(f"[{timestamp}] {client_ip} → Key: '{key}', Ctrl: {ctrl}, Shift: {shift}, Alt: {alt}")
+    gui_log(log_msg)
 
 
 def press_key(key_name: str, ctrl: bool = False, shift: bool = False, alt: bool = False) -> bool:
     try:
+        # Check if key is a composite shortcut (e.g., "win+tab", "alt+tab")
+        if '+' in key_name:
+            parts = key_name.lower().split('+')
+            modifiers = []
+            actual_key = parts[-1]
+            
+            # Process all parts except the last one as modifiers
+            for part in parts[:-1]:
+                part = part.strip()
+                if part in MODIFIER_KEYS:
+                    modifiers.append(MODIFIER_KEYS[part])
+            
+            # Press all modifiers
+            for mod in modifiers:
+                keyboard.press(mod)
+            
+            # Small delay to ensure modifiers register
+            import time
+            time.sleep(0.01)
+            
+            # Press and release the actual key
+            if actual_key in SPECIAL_KEYS:
+                key_obj = SPECIAL_KEYS[actual_key]
+                keyboard.press(key_obj)
+                keyboard.release(key_obj)
+            else:
+                keyboard.press(actual_key)
+                keyboard.release(actual_key)
+            
+            # Small delay before releasing modifiers
+            time.sleep(0.01)
+            
+            # Release all modifiers in reverse order
+            for mod in reversed(modifiers):
+                keyboard.release(mod)
+            
+            return True
+        
+        # Original simple key press logic
         modifiers = []
         if ctrl:
             modifiers.append(Key.ctrl)

@@ -1,4 +1,10 @@
+# Core Server Dependencies
 fastapi>=0.115.0
 uvicorn>=0.34.0
 pydantic>=2.7.0
 pynput>=1.7.7
+
+# GUI Dashboard Dependencies
+PyQt6>=6.6.0
+pyinstaller>=6.3.0
+psutil>=5.9.0

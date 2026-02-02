@@ -1,6 +1,9 @@
 {
-  "port": 5000,
+  "port": 5001,
   "host": "0.0.0.0",
   "log_level": "INFO",
-  "allowed_ips": []
+  "allowed_ips": [],
+  "theme": "Dark",
+  "auto_start": false,
+  "minimize_to_tray": true
 }

@@ -2,31 +2,32 @@
 Generated: 2026-02-02
 
 ## Tasks
-[updated] Lock orientation to landscape-only mode
-[updated] Create DualCharKey widget with primary/secondary character display
-[updated] Create ModifierKey widget with hold-down behavior (onTapDown/onTapUp)
-[updated] Create SpecialKey widget (Tab, Enter, Backspace, etc.)
-[updated] Create FunctionKey widget (F1-F12)
-[updated] Create ArrowKey widget with navigation symbols
-[updated] Create SpaceBar widget spanning across halves
-[updated] Create KeyboardRow widget with proper spacing
-[updated] Create KeyboardHalf widget (left/right containers)
-[updated] Create SplitKeyboardLayout main container with center gap
-[updated] Update KeyboardViewModel with hold-based modifier logic
-[updated] Add dual-character selection logic based on Shift state
-[updated] Implement long-press repeat for Backspace/Delete/Arrows
-[updated] Implement Caps Lock toggle with visual indicator
-[updated] Build complete 6-row left keyboard layout
-[updated] Build complete 6-row right keyboard layout
-[updated] Add visual styling (colors, shadows, borders, animations)
-[updated] Wire up all keys to KeyboardService backend
-[updated] Refactor keyboard_screen.dart to use new split layout
-[todo-20] Test all modifier combinations (Ctrl+C, Ctrl+Shift+N, etc.)
-[todo-21] Test dual-character input with Shift
-[todo-22] Test long-press repeat behavior
-[todo-23] Test Caps Lock indicator and behavior
-[todo-24] Test on physical device in landscape mode
-[todo-25] Security review and final polish
+[tested] Lock orientation to landscape-only mode
+[tested] Create DualCharKey widget with primary/secondary character display
+[tested] Create ModifierKey widget with hold-down behavior (onTapDown/onTapUp)
+[tested] Create SpecialKey widget (Tab, Enter, Backspace, etc.)
+[tested] Create FunctionKey widget (F1-F12)
+[tested] Create ArrowKey widget with navigation symbols
+[tested] Create SpaceBar widget spanning across halves
+[tested] Create KeyboardRow widget with proper spacing
+[tested] Create KeyboardHalf widget (left/right containers)
+[tested] Create SplitKeyboardLayout main container with center gap
+[tested] Update KeyboardViewModel with hold-based modifier logic
+[tested] Add dual-character selection logic based on Shift state
+[tested] Implement long-press repeat for Backspace/Delete/Arrows
+[tested] Implement Caps Lock toggle with visual indicator
+[tested] Build complete 6-row left keyboard layout
+[tested] Build complete 6-row right keyboard layout
+[tested] Add visual styling (colors, shadows, borders, animations)
+[tested] Wire up all keys to KeyboardService backend
+[tested] Refactor keyboard_screen.dart to use new split layout
+[updated] Make keyboard fully responsive to fit screen
+[updated] Add input preview box to show typed text
+[updated] Add Keyote title with connection indicator (green/red dot)
+[updated] Add sound toggle button and haptic feedback
+[updated] Fix Enter key to use sendSpecialKey
+[updated] Optimize spacing to use full screen space
+[todo-26] Final testing on device
 
 ## Progress Notes
 - Starting complete keyboard redesign
