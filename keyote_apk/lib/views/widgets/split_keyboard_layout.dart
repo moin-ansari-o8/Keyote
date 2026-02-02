@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/keyboard_viewmodel.dart';
 import 'keyboard_half.dart';
@@ -14,12 +13,6 @@ import 'alpha_key.dart';
 
 class SplitKeyboardLayout extends StatelessWidget {
   const SplitKeyboardLayout({super.key});
-
-  void _playKeySound(KeyboardViewModel vm) {
-    if (vm.soundEnabled) {
-      SystemSound.play(SystemSoundType.click);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,70 +85,49 @@ class SplitKeyboardLayout extends StatelessWidget {
             secondary: '~',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('`'),
-            onLongPress: () {
-              _playKeySound(vm);
-              vm.sendSecondaryChar('`');
-            },
+            onLongPress: () => vm.sendSecondaryChar('`'),
           ),
           DualCharKey(
             primary: '1',
             secondary: '!',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('1'),
-            onLongPress: () {
-              _playKeySound(vm);
-              vm.sendSecondaryChar('1');
-            },
+            onLongPress: () => vm.sendSecondaryChar('1'),
           ),
           DualCharKey(
             primary: '2',
             secondary: '@',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('2'),
-            onLongPress: () {
-              _playKeySound(vm);
-              vm.sendSecondaryChar('2');
-            },
+            onLongPress: () => vm.sendSecondaryChar('2'),
           ),
           DualCharKey(
             primary: '3',
             secondary: '#',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('3'),
-            onLongPress: () {
-              _playKeySound(vm);
-              vm.sendSecondaryChar('3');
-            },
+            onLongPress: () => vm.sendSecondaryChar('3'),
           ),
           DualCharKey(
             primary: '4',
             secondary: '\$',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('4'),
-            onLongPress: () {
-              _playKeySound(vm);
-              vm.sendSecondaryChar('4');
-            },
+            onLongPress: () => vm.sendSecondaryChar('4'),
           ),
           DualCharKey(
             primary: '5',
             secondary: '%',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('5'),
-            onLongPress: () {
-              _playKeySound(vm);
-              vm.sendSecondaryChar('5');
-            },
+            onLongPress: () => vm.sendSecondaryChar('5'),
           ),
           DualCharKey(
             primary: '6',
             secondary: '^',
             shiftActive: vm.shiftPressed,
             onPressed: () => vm.sendCharacter('6'),
-            onLongPress: () {
-              _playKeySound(vm);
-              vm.sendSecondaryChar('6');
-            },
+            onLongPress: () => vm.sendSecondaryChar('6'),
           ),
         ],
       ),
@@ -166,45 +138,27 @@ class SplitKeyboardLayout extends StatelessWidget {
           SpecialKey(
             label: 'Tab',
             widthMultiplier: 1.5,
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendSpecialKey('Tab');
-            },
+            onPressed: () => vm.sendSpecialKey('Tab'),
           ),
           AlphaKey(
             label: 'Q',
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendCharacter('q');
-            },
+            onPressed: () => vm.sendCharacter('q'),
           ),
           AlphaKey(
             label: 'W',
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendCharacter('w');
-            },
+            onPressed: () => vm.sendCharacter('w'),
           ),
           AlphaKey(
             label: 'E',
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendCharacter('e');
-            },
+            onPressed: () => vm.sendCharacter('e'),
           ),
           AlphaKey(
             label: 'R',
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendCharacter('r');
-            },
+            onPressed: () => vm.sendCharacter('r'),
           ),
           AlphaKey(
             label: 'T',
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendCharacter('t');
-            },
+            onPressed: () => vm.sendCharacter('t'),
           ),
         ],
       ),
@@ -268,10 +222,7 @@ class SplitKeyboardLayout extends StatelessWidget {
           ),
           SpaceBar(
             widthMultiplier: 3.0,
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendSpecialKey(' ');
-            },
+            onPressed: () => vm.sendSpecialKey(' '),
           ),
         ],
       ),
@@ -347,10 +298,7 @@ class SplitKeyboardLayout extends StatelessWidget {
           SpecialKey(
             label: 'Backspace',
             widthMultiplier: 2.0,
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendSpecialKey('Backspace');
-            },
+            onPressed: () => vm.sendSpecialKey('Backspace'),
             enableRepeat: true,
           ),
         ],
@@ -407,10 +355,7 @@ class SplitKeyboardLayout extends StatelessWidget {
           SpecialKey(
             label: 'Enter',
             widthMultiplier: 2.0,
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendSpecialKey('Return');
-            },
+            onPressed: () => vm.sendSpecialKey('Return'),
           ),
         ],
       ),
@@ -456,10 +401,7 @@ class SplitKeyboardLayout extends StatelessWidget {
         keys: [
           SpaceBar(
             widthMultiplier: 3.0,
-            onPressed: () {
-              _playKeySound(vm);
-              vm.sendSpecialKey(' ');
-            },
+            onPressed: () => vm.sendSpecialKey(' '),
           ),
           custom.ModifierKey(
             label: 'Alt',

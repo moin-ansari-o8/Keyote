@@ -46,4 +46,23 @@ class StorageService {
     return await _prefs?.setString(AppConstants.prefKeyThemeMode, mode) ??
         false;
   }
+
+  Future<bool> getSoundEnabled() async {
+    return _prefs?.getBool(AppConstants.prefKeySoundEnabled) ?? true;
+  }
+
+  Future<bool> setSoundEnabled(bool enabled) async {
+    return await _prefs?.setBool(AppConstants.prefKeySoundEnabled, enabled) ??
+        false;
+  }
+
+  Future<String> getSelectedSound() async {
+    return _prefs?.getString(AppConstants.prefKeySelectedSound) ??
+        AppConstants.defaultSound;
+  }
+
+  Future<bool> setSelectedSound(String sound) async {
+    return await _prefs?.setString(AppConstants.prefKeySelectedSound, sound) ??
+        false;
+  }
 }

@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../models/server_config.dart';
 import '../services/keyboard_service.dart';
 import '../services/storage_service.dart';
+import '../utils/constants.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   final KeyboardService _keyboardService;
   final StorageService _storageService;
+  final AudioPlayer _previewPlayer = AudioPlayer();
 
   String _ip = '';
   int _port = 5000;
   bool _isConnected = false;
   bool _isTesting = false;
   ThemeMode _themeMode = ThemeMode.system;
+  bool _soundEnabled = true;
+  String _selectedSound = AppConstants.defaultSound;
 
   SettingsViewModel(this._keyboardService, this._storageService) {
     _loadSettings();
@@ -22,6 +27,14 @@ class SettingsViewModel extends ChangeNotifier {
   bool get isConnected => _isConnected;
   bool get isTesting => _isTesting;
   ThemeMode get themeMode => _themeMode;
+  bool get soundEnabled => _soundEnabled;
+  String get selectedSound => _selectedSound;
+
+  @override
+  void dispose() {
+    _previewPlayer.dispose();
+    super.dispose();
+  }
 
   Future<void> _loadSettings() async {
     final config = await _storageService.getServerConfig();
@@ -41,6 +54,10 @@ class SettingsViewModel extends ChangeNotifier {
       );
       notifyListeners();
     }
+
+    _soundEnabled = await _storageService.getSoundEnabled();
+    _selectedSound = await _storageService.getSelectedSound();
+    notifyListeners();
   }
 
   void updateIp(String value) {
@@ -86,5 +103,30 @@ class SettingsViewModel extends ChangeNotifier {
       _isConnected = connected;
       notifyListeners();
     }
+  }
+
+  Future<void> updateSoundEnabled(bool enabled) async {
+    _soundEnabled = enabled;
+    await _storageService.setSoundEnabled(enabled);
+    notifyListeners();
+  }
+
+  Future<void> updateSelectedSound(String sound) async {
+    _selectedSound = sound;
+    await _storageService.setSelectedSound(sound);
+    notifyListeners();
+    // Play preview of the selected sound
+    playPreview(sound);
+  }
+
+  void playPreview(String sound) {
+    _previewPlayer.stop();
+    _previewPlayer
+        .play(
+          AssetSource('sounds/$sound'),
+          mode: PlayerMode.lowLatency,
+          volume: 1.0,
+        )
+        .catchError((_) {});
   }
 }

@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
           create: (_) => SettingsViewModel(keyboardService, storageService),
         ),
         ChangeNotifierProvider(
-          create: (_) => KeyboardViewModel(keyboardService),
+          create: (_) => KeyboardViewModel(keyboardService, storageService),
         ),
       ],
       child: Consumer<SettingsViewModel>(

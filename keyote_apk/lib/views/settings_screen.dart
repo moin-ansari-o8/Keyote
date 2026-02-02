@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/settings_viewmodel.dart';
 import '../utils/validators.dart';
+import '../utils/constants.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -192,6 +193,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             viewModel.themeMode == ThemeMode.dark
                                 ? Icons.dark_mode
                                 : Icons.light_mode,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Sound Settings', style: theme.textTheme.titleLarge),
+                        const SizedBox(height: 16),
+
+                        SwitchListTile(
+                          title: const Text('Key Press Sound'),
+                          subtitle: const Text(
+                            'Enable or disable sound feedback',
+                          ),
+                          value: viewModel.soundEnabled,
+                          onChanged: (value) => viewModel.updateSoundEnabled(value),
+                          secondary: Icon(
+                            viewModel.soundEnabled
+                                ? Icons.volume_up
+                                : Icons.volume_off,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        ListTile(
+                          leading: const Icon(Icons.music_note),
+                          title: const Text('Sound Type'),
+                          subtitle: DropdownButton<String>(
+                            value: viewModel.selectedSound,
+                            isExpanded: true,
+                            items: AppConstants.soundLabels.entries.map((entry) {
+                              return DropdownMenuItem<String>(
+                                value: entry.key,
+                                child: Row(
+                                  children: [
+                                    Text(entry.value),
+                                    const SizedBox(width: 8),
+                                    if (viewModel.selectedSound == entry.key)
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green,
+                                        size: 16,
+                                      ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                viewModel.updateSelectedSound(newValue);
+                              }
+                            },
                           ),
                         ),
                       ],

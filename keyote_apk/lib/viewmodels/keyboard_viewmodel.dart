@@ -4,10 +4,12 @@ import 'package:audioplayers/audioplayers.dart';
 import '../models/key_command.dart';
 import '../models/dual_char.dart';
 import '../services/keyboard_service.dart';
+import '../services/storage_service.dart';
 import '../utils/constants.dart';
 
 class KeyboardViewModel extends ChangeNotifier {
   final KeyboardService _keyboardService;
+  final StorageService _storageService;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   bool _ctrlPressed = false;
@@ -17,6 +19,7 @@ class KeyboardViewModel extends ChangeNotifier {
   bool _winUsedWithOtherKey = false;
   bool _capsLockActive = false;
   bool _soundEnabled = true;
+  String _selectedSound = AppConstants.defaultSound;
   bool _isConnected = false;
   String _inputPreview = '';
   Timer? _debounceTimer;
@@ -48,7 +51,8 @@ class KeyboardViewModel extends ChangeNotifier {
     '`': DualChar(primary: '`', secondary: '~'),
   };
 
-  KeyboardViewModel(this._keyboardService) {
+  KeyboardViewModel(this._keyboardService, this._storageService) {
+    _loadSoundPreferences();
     _startConnectionMonitoring();
   }
 
@@ -89,11 +93,25 @@ class KeyboardViewModel extends ChangeNotifier {
   bool get winPressed => _winPressed;
   bool get capsLockActive => _capsLockActive;
   bool get soundEnabled => _soundEnabled;
+  String get selectedSound => _selectedSound;
   bool get isConnected => _isConnected;
   String get inputPreview => _inputPreview;
 
-  void toggleSound() {
-    _soundEnabled = !_soundEnabled;
+  Future<void> _loadSoundPreferences() async {
+    _soundEnabled = await _storageService.getSoundEnabled();
+    _selectedSound = await _storageService.getSelectedSound();
+    notifyListeners();
+  }
+
+  Future<void> updateSoundEnabled(bool enabled) async {
+    _soundEnabled = enabled;
+    await _storageService.setSoundEnabled(enabled);
+    notifyListeners();
+  }
+
+  Future<void> updateSelectedSound(String sound) async {
+    _selectedSound = sound;
+    await _storageService.setSelectedSound(sound);
     notifyListeners();
   }
 
@@ -161,18 +179,20 @@ class KeyboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _playSound() async {
-    if (_soundEnabled) {
-      try {
-        await _audioPlayer.play(
-          AssetSource('sounds/click.wav'),
+  void _playSound() {
+    if (!_soundEnabled) return;
+
+    // Stop previous sound to prevent overlap and ensure every key press is heard
+    _audioPlayer.stop();
+
+    // Play selected sound with low latency mode for instant response
+    _audioPlayer
+        .play(
+          AssetSource('sounds/$_selectedSound'),
           mode: PlayerMode.lowLatency,
           volume: 1.0,
-        );
-      } catch (e) {
-        // Silently fail if audio can't be played
-      }
-    }
+        )
+        .catchError((_) {});
   }
 
   void sendKey(String key, {bool? ctrl, bool? shift, bool? alt, bool? win}) {
@@ -231,7 +251,6 @@ class KeyboardViewModel extends ChangeNotifier {
     }
   }
 
-  // Send character with dual-char support
   void sendCharacter(String keyId) {
     if (!_isConnected) return;
 
@@ -249,14 +268,15 @@ class KeyboardViewModel extends ChangeNotifier {
       char = keyId;
     }
 
-    // Update input preview
+    // Update input preview without notifying yet
     _inputPreview += char;
     if (_inputPreview.length > 100) {
       _inputPreview = _inputPreview.substring(_inputPreview.length - 100);
     }
-    notifyListeners();
 
+    // Send key first, then notify once
     sendKey(char);
+    notifyListeners();
   }
 
   // Send secondary character (for long press on dual-char keys)
@@ -306,18 +326,26 @@ class KeyboardViewModel extends ChangeNotifier {
       } else {
         _inputPreview = _inputPreview.substring(0, _inputPreview.length - 1);
       }
-      notifyListeners();
     } else if (key == 'Return' || key == 'Enter') {
       _inputPreview += '\n';
-      notifyListeners();
     } else if (key == 'Tab') {
-      _inputPreview += '\t';
-      notifyListeners();
+      // Show key combination text when modifiers are active
+      if (_ctrlPressed || _altPressed || _winPressed) {
+        List<String> parts = [];
+        if (_ctrlPressed) parts.add('Ctrl');
+        if (_altPressed) parts.add('Alt');
+        if (_winPressed) parts.add('Win');
+        parts.add('Tab');
+        _inputPreview += ' {${parts.join('+')}} ';
+      } else {
+        _inputPreview += '\t';
+      }
     } else if (key == ' ') {
       _inputPreview += ' ';
-      notifyListeners();
     }
 
+    // Notify once after all updates
+    notifyListeners();
     sendKey(key);
   }
 

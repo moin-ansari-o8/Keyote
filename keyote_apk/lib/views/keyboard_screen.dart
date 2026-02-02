@@ -10,23 +10,10 @@ class KeyboardScreen extends StatefulWidget {
   State<KeyboardScreen> createState() => _KeyboardScreenState();
 }
 
-class _KeyboardScreenState extends State<KeyboardScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _cursorController;
-
+class _KeyboardScreenState extends State<KeyboardScreen> {
   @override
   void initState() {
     super.initState();
-    _cursorController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _cursorController.dispose();
-    super.dispose();
   }
 
   @override
@@ -87,10 +74,9 @@ class _KeyboardScreenState extends State<KeyboardScreen>
                         children: [
                           Expanded(
                             child: Align(
-                              alignment:
-                                  !keyboardVm.isConnected
-                                      ? Alignment.center
-                                      : Alignment.centerLeft,
+                              alignment: !keyboardVm.isConnected
+                                  ? Alignment.center
+                                  : Alignment.centerLeft,
                               child: SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
@@ -117,19 +103,14 @@ class _KeyboardScreenState extends State<KeyboardScreen>
                                       maxLines: 1,
                                       overflow: TextOverflow.clip,
                                     ),
-                                    // Blinking cursor
+                                    // Steady cursor
                                     if (keyboardVm.isConnected &&
                                         keyboardVm.inputPreview.isNotEmpty)
-                                      FadeTransition(
-                                        opacity: _cursorController,
-                                        child: Container(
-                                          width: 2,
-                                          height: 16,
-                                          color: Colors.white,
-                                          margin: const EdgeInsets.only(
-                                            left: 1,
-                                          ),
-                                        ),
+                                      Container(
+                                        width: 2,
+                                        height: 16,
+                                        color: Colors.white,
+                                        margin: const EdgeInsets.only(left: 1),
                                       ),
                                   ],
                                 ),
@@ -152,17 +133,6 @@ class _KeyboardScreenState extends State<KeyboardScreen>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Sound toggle
-                  IconButton(
-                    icon: Icon(
-                      keyboardVm.soundEnabled
-                          ? Icons.volume_up
-                          : Icons.volume_off,
-                      color: Colors.white,
-                    ),
-                    onPressed: keyboardVm.toggleSound,
-                    tooltip: 'Toggle Sound',
-                  ),
                   // Settings button
                   IconButton(
                     icon: const Icon(Icons.settings, color: Colors.white),

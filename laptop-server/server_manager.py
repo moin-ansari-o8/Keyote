@@ -59,7 +59,7 @@ class ServerManager:
                 app=app,
                 host=self.host,
                 port=self.port,
-                log_level="info",
+                log_config=None,  # Disable uvicorn's logging (fixes GUI app crash)
                 access_log=False,
                 timeout_keep_alive=30
             )
