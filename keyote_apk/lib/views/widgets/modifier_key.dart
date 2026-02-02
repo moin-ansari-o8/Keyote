@@ -83,21 +83,21 @@ class _ModifierKeyState extends State<ModifierKey>
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
               color: widget.isActive
-                  ? Colors.white.withOpacity(0.5)
-                  : Colors.black.withOpacity(0.1),
+                  ? Colors.white.withValues(alpha: 0.5)
+                  : Colors.black.withValues(alpha: 0.1),
               width: widget.isActive ? 2 : 1,
             ),
             boxShadow: _isPressed
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 2,
                       offset: const Offset(0, 1),
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

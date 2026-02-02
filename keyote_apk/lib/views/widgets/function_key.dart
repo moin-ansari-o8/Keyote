@@ -68,18 +68,18 @@ class _FunctionKeyState extends State<FunctionKey>
                 ? const Color(0xFF505050)
                 : const Color(0xFF616161),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.black.withOpacity(0.1)),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
             boxShadow: _isPressed
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 2,
                       offset: const Offset(0, 1),
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

@@ -41,8 +41,8 @@ class _KeyboardScreenState extends State<KeyboardScreen> {
                       boxShadow: [
                         BoxShadow(
                           color: keyboardVm.isConnected
-                              ? Colors.green.withOpacity(0.5)
-                              : Colors.red.withOpacity(0.5),
+                              ? Colors.green.withValues(alpha: 0.5)
+                              : Colors.red.withValues(alpha: 0.5),
                           blurRadius: 8,
                           spreadRadius: 2,
                         ),
@@ -68,7 +68,7 @@ class _KeyboardScreenState extends State<KeyboardScreen> {
                       decoration: BoxDecoration(
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [

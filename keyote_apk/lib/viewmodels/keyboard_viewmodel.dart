@@ -52,7 +52,7 @@ class KeyboardViewModel extends ChangeNotifier {
     ']': DualChar(primary: ']', secondary: '}'),
     '\\': DualChar(primary: r'\', secondary: '|'),
     ';': DualChar(primary: ';', secondary: ':'),
-    '\'': DualChar(primary: '\'', secondary: '\"'),
+    "'": DualChar(primary: "'", secondary: '"'),
     ',': DualChar(primary: ',', secondary: '<'),
     '.': DualChar(primary: '.', secondary: '>'),
     '/': DualChar(primary: '/', secondary: '?'),
@@ -444,9 +444,7 @@ class KeyboardViewModel extends ChangeNotifier {
     // Handle Home - move cursor to start
     if (key == 'Home') {
       _inputPreview =
-          _inputPreview.substring(0, _cursorPosition) +
-          ' {Home} ' +
-          _inputPreview.substring(_cursorPosition);
+          '${_inputPreview.substring(0, _cursorPosition)} {Home} ${_inputPreview.substring(_cursorPosition)}';
       _cursorPosition += 8; // Length of " {Home} "
       sendKey(key);
       notifyListeners();
@@ -456,9 +454,7 @@ class KeyboardViewModel extends ChangeNotifier {
     // Handle End - move cursor to end
     if (key == 'End') {
       _inputPreview =
-          _inputPreview.substring(0, _cursorPosition) +
-          ' {End} ' +
-          _inputPreview.substring(_cursorPosition);
+          '${_inputPreview.substring(0, _cursorPosition)} {End} ${_inputPreview.substring(_cursorPosition)}';
       _cursorPosition += 7; // Length of " {End} "
       sendKey(key);
       notifyListeners();
@@ -468,9 +464,7 @@ class KeyboardViewModel extends ChangeNotifier {
     // Handle Up/Down arrows - show as special keys
     if (key == 'Up') {
       _inputPreview =
-          _inputPreview.substring(0, _cursorPosition) +
-          ' {Up} ' +
-          _inputPreview.substring(_cursorPosition);
+          '${_inputPreview.substring(0, _cursorPosition)} {Up} ${_inputPreview.substring(_cursorPosition)}';
       _cursorPosition += 6; // Length of " {Up} "
       sendKey(key);
       notifyListeners();
@@ -479,9 +473,7 @@ class KeyboardViewModel extends ChangeNotifier {
 
     if (key == 'Down') {
       _inputPreview =
-          _inputPreview.substring(0, _cursorPosition) +
-          ' {Down} ' +
-          _inputPreview.substring(_cursorPosition);
+          '${_inputPreview.substring(0, _cursorPosition)} {Down} ${_inputPreview.substring(_cursorPosition)}';
       _cursorPosition += 8; // Length of " {Down} "
       sendKey(key);
       notifyListeners();
@@ -491,9 +483,7 @@ class KeyboardViewModel extends ChangeNotifier {
     // Handle Enter/Return
     if (key == 'Return' || key == 'Enter') {
       _inputPreview =
-          _inputPreview.substring(0, _cursorPosition) +
-          '\n' +
-          _inputPreview.substring(_cursorPosition);
+          '${_inputPreview.substring(0, _cursorPosition)}\n${_inputPreview.substring(_cursorPosition)}';
       _cursorPosition++;
       sendKey(key);
       notifyListeners();
@@ -511,15 +501,11 @@ class KeyboardViewModel extends ChangeNotifier {
         parts.add('Tab');
         final tabText = ' {${parts.join('+')}} ';
         _inputPreview =
-            _inputPreview.substring(0, _cursorPosition) +
-            tabText +
-            _inputPreview.substring(_cursorPosition);
+            '${_inputPreview.substring(0, _cursorPosition)}$tabText${_inputPreview.substring(_cursorPosition)}';
         _cursorPosition += tabText.length;
       } else {
         _inputPreview =
-            _inputPreview.substring(0, _cursorPosition) +
-            '\t' +
-            _inputPreview.substring(_cursorPosition);
+            '${_inputPreview.substring(0, _cursorPosition)}\t${_inputPreview.substring(_cursorPosition)}';
         _cursorPosition++;
       }
       sendKey(key);
@@ -530,9 +516,7 @@ class KeyboardViewModel extends ChangeNotifier {
     // Handle Space
     if (key == ' ') {
       _inputPreview =
-          _inputPreview.substring(0, _cursorPosition) +
-          ' ' +
-          _inputPreview.substring(_cursorPosition);
+          '${_inputPreview.substring(0, _cursorPosition)} ${_inputPreview.substring(_cursorPosition)}';
       _cursorPosition++;
       sendKey(key);
       notifyListeners();

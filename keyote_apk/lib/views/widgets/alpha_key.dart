@@ -68,18 +68,18 @@ class _AlphaKeyState extends State<AlphaKey>
                 ? const Color(0xFFD0D0D0)
                 : const Color(0xFFE8E8E8),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.black.withOpacity(0.1)),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
             boxShadow: _isPressed
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 2,
                       offset: const Offset(0, 1),
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

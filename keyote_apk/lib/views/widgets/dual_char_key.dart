@@ -102,18 +102,18 @@ class _DualCharKeyState extends State<DualCharKey>
                 ? const Color(0xFFD0D0D0)
                 : const Color(0xFFE8E8E8),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.black.withOpacity(0.1)),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
             boxShadow: _isPressed
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 2,
                       offset: const Offset(0, 1),
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -131,7 +131,7 @@ class _DualCharKeyState extends State<DualCharKey>
                     fontSize: 10,
                     color: widget.shiftActive
                         ? const Color(0xFF2196F3)
-                        : const Color(0xFF1F1F1F).withOpacity(0.6),
+                        : const Color(0xFF1F1F1F).withValues(alpha: 0.6),
                     fontWeight: widget.shiftActive
                         ? FontWeight.bold
                         : FontWeight.normal,
@@ -149,7 +149,7 @@ class _DualCharKeyState extends State<DualCharKey>
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: widget.shiftActive
-                          ? const Color(0xFF1F1F1F).withOpacity(0.6)
+                          ? const Color(0xFF1F1F1F).withValues(alpha: 0.6)
                           : const Color(0xFF1F1F1F),
                     ),
                   ),
