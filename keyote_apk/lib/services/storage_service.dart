@@ -57,8 +57,18 @@ class StorageService {
   }
 
   Future<String> getSelectedSound() async {
-    return _prefs?.getString(AppConstants.prefKeySelectedSound) ??
+    String sound =
+        _prefs?.getString(AppConstants.prefKeySelectedSound) ??
         AppConstants.defaultSound;
+
+    // Migrate old .mp3 preferences to .wav
+    if (sound.endsWith('.mp3')) {
+      sound = sound.replaceAll('.mp3', '.wav');
+      // Save the migrated value
+      await setSelectedSound(sound);
+    }
+
+    return sound;
   }
 
   Future<bool> setSelectedSound(String sound) async {

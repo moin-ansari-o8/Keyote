@@ -12,7 +12,8 @@ class KeyboardViewModel extends ChangeNotifier {
   final StorageService _storageService;
 
   // Audio pool for zero-latency sound effects (like instrument/game apps)
-  static const int _audioPoolSize = 5; // Pool of 5 pre-loaded players
+  static const int _audioPoolSize =
+      5; // Pool of 5 players (matches SoundPool stream limits, more = overhead)
   final List<AudioPlayer> _audioPool = [];
   int _currentPlayerIndex = 0;
   bool _audioPoolInitialized = false;
@@ -216,16 +217,15 @@ class KeyboardViewModel extends ChangeNotifier {
     _audioPoolInitialized = true;
   }
 
-
-
   void _playSound() {
     if (!_soundEnabled || !_audioPoolInitialized) return;
 
-    // Use round-robin player from pool (like instrument apps)
+    // Use round-robin player from pool (like drum pads)
     final player = _audioPool[_currentPlayerIndex];
 
-    // Use play() not resume() - play() resets position and handles state transitions
-    // lowLatency mode internally caches small assets, no manual preload needed
+    // Just play - no stop needed. play() automatically restarts.
+    // Calling stop() before play() floods async platform channel queue
+    // causing SoundPool resource exhaustion (Überlastung).
     player.play(
       AssetSource('sounds/$_selectedSound'),
       mode: PlayerMode.lowLatency,
@@ -369,8 +369,8 @@ class KeyboardViewModel extends ChangeNotifier {
           _cursorPosition--;
         }
       }
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -385,8 +385,8 @@ class KeyboardViewModel extends ChangeNotifier {
           _cursorPosition++;
         }
       }
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -406,8 +406,8 @@ class KeyboardViewModel extends ChangeNotifier {
             _inputPreview.substring(_cursorPosition);
         _cursorPosition--;
       }
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -418,8 +418,8 @@ class KeyboardViewModel extends ChangeNotifier {
             _inputPreview.substring(0, _cursorPosition) +
             _inputPreview.substring(_cursorPosition + 1);
       }
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -430,8 +430,8 @@ class KeyboardViewModel extends ChangeNotifier {
           ' {Home} ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition += 8; // Length of " {Home} "
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -442,8 +442,8 @@ class KeyboardViewModel extends ChangeNotifier {
           ' {End} ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition += 7; // Length of " {End} "
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -454,8 +454,8 @@ class KeyboardViewModel extends ChangeNotifier {
           ' {Up} ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition += 6; // Length of " {Up} "
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -465,8 +465,8 @@ class KeyboardViewModel extends ChangeNotifier {
           ' {Down} ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition += 8; // Length of " {Down} "
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -477,8 +477,8 @@ class KeyboardViewModel extends ChangeNotifier {
           '\n' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition++;
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -504,8 +504,8 @@ class KeyboardViewModel extends ChangeNotifier {
             _inputPreview.substring(_cursorPosition);
         _cursorPosition++;
       }
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 
@@ -516,8 +516,8 @@ class KeyboardViewModel extends ChangeNotifier {
           ' ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition++;
-      notifyListeners();
       sendKey(key);
+      notifyListeners();
       return;
     }
 

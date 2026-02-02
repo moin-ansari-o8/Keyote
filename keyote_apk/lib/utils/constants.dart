@@ -14,10 +14,10 @@ class AppConstants {
   static const String prefKeySoundEnabled = 'sound_enabled';
   static const String prefKeySelectedSound = 'selected_sound';
 
-  // Sound options
+  // Sound options (optimized WAV format for zero-latency)
   static const String soundClick = 'click.wav';
-  static const String soundMechanicalOne = 'key-press1.mp3';
-  static const String soundMechanicalTwo = 'key-press2.mp3';
+  static const String soundMechanicalOne = 'key-press1.wav';
+  static const String soundMechanicalTwo = 'key-press2.wav';
   static const String defaultSound = soundMechanicalOne;
 
   static const Map<String, String> soundLabels = {
