@@ -87,266 +87,297 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Server Configuration',
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Use two-column layout for wider screens
+                final isWideScreen = constraints.maxWidth > 600;
 
-                        TextFormField(
-                          controller: _ipController,
-                          decoration: const InputDecoration(
-                            labelText: 'Laptop IP Address',
-                            hintText: '192.168.x.x',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.computer),
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: Validators.validateIp,
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller: _portController,
-                          decoration: const InputDecoration(
-                            labelText: 'Port',
-                            hintText: '5000',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.settings_ethernet),
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: Validators.validatePort,
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        Row(
+                if (isWideScreen) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(
-                              child: FilledButton.icon(
-                                onPressed: viewModel.isTesting
-                                    ? null
-                                    : _testConnection,
-                                icon: viewModel.isTesting
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Colors.white,
-                                              ),
-                                        ),
-                                      )
-                                    : const Icon(Icons.wifi_find),
-                                label: Text(
-                                  viewModel.isTesting
-                                      ? 'Testing...'
-                                      : 'Test Connection',
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: FilledButton.icon(
-                                onPressed: _saveSettings,
-                                icon: const Icon(Icons.save),
-                                label: const Text('Save'),
-                              ),
-                            ),
+                            _buildServerConfigCard(viewModel, theme),
+                            const SizedBox(height: 16),
+                            _buildAppearanceCard(viewModel, theme),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Appearance', style: theme.textTheme.titleLarge),
-                        const SizedBox(height: 16),
-
-                        SwitchListTile(
-                          title: const Text('Dark Mode'),
-                          subtitle: const Text(
-                            'Toggle between light and dark theme',
-                          ),
-                          value: viewModel.themeMode == ThemeMode.dark,
-                          onChanged: (_) => viewModel.toggleTheme(),
-                          secondary: Icon(
-                            viewModel.themeMode == ThemeMode.dark
-                                ? Icons.dark_mode
-                                : Icons.light_mode,
-                          ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Right Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildSoundSettingsCard(viewModel, theme),
+                            const SizedBox(height: 16),
+                            _buildAboutCard(theme),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                ),
+                      ),
+                    ],
+                  );
+                } else {
+                  // Single column layout for narrow screens
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildServerConfigCard(viewModel, theme),
+                      const SizedBox(height: 16),
+                      _buildSoundSettingsCard(viewModel, theme),
+                      const SizedBox(height: 16),
+                      _buildAppearanceCard(viewModel, theme),
+                      const SizedBox(height: 16),
+                      _buildAboutCard(theme),
+                    ],
+                  );
+                }
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-                const SizedBox(height: 16),
+  Widget _buildServerConfigCard(SettingsViewModel viewModel, ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Server Configuration', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 16),
 
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sound Settings',
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 16),
+            TextFormField(
+              controller: _ipController,
+              decoration: const InputDecoration(
+                labelText: 'Laptop IP Address',
+                hintText: '192.168.x.x',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.computer),
+              ),
+              keyboardType: TextInputType.number,
+              validator: Validators.validateIp,
+            ),
 
-                        SwitchListTile(
-                          title: const Text('Key Press Sound'),
-                          subtitle: const Text(
-                            'Enable or disable sound feedback',
-                          ),
-                          value: viewModel.soundEnabled,
-                          onChanged: (value) =>
-                              viewModel.updateSoundEnabled(value),
-                          secondary: Icon(
-                            viewModel.soundEnabled
-                                ? Icons.volume_up
-                                : Icons.volume_off,
-                          ),
-                        ),
+            const SizedBox(height: 16),
 
-                        const SizedBox(height: 8),
+            TextFormField(
+              controller: _portController,
+              decoration: const InputDecoration(
+                labelText: 'Port',
+                hintText: '5000',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.settings_ethernet),
+              ),
+              keyboardType: TextInputType.number,
+              validator: Validators.validatePort,
+            ),
 
-                        ListTile(
-                          leading: const Icon(Icons.music_note),
-                          title: const Text('Sound Type'),
-                          subtitle: DropdownButton<String>(
-                            value: viewModel.selectedSound,
-                            isExpanded: true,
-                            items: AppConstants.soundLabels.entries.map((
-                              entry,
-                            ) {
-                              return DropdownMenuItem<String>(
-                                value: entry.key,
-                                child: Row(
-                                  children: [
-                                    Text(entry.value),
-                                    const SizedBox(width: 8),
-                                    if (viewModel.selectedSound == entry.key)
-                                      const Icon(
-                                        Icons.check_circle,
-                                        color: Colors.green,
-                                        size: 16,
-                                      ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) async {
-                              if (newValue != null) {
-                                await viewModel.updateSelectedSound(newValue);
-                                // Notify keyboard viewmodel to reload sound
-                                if (mounted) {
-                                  context.read<KeyboardViewModel>().reloadSoundSettings();
-                                }
-                              }
-                            },
-                          ),
-                        ),
+            const SizedBox(height: 24),
 
-                        const SizedBox(height: 16),
-
-                        ListTile(
-                          leading: const Icon(Icons.volume_up),
-                          title: const Text('Volume'),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Slider(
-                                      value: viewModel.soundVolume,
-                                      min: AppConstants.minVolume,
-                                      max: AppConstants.maxVolume,
-                                      divisions: 20,
-                                      label: '${(viewModel.soundVolume * 100).round()}%',
-                                      onChanged: (double value) async {
-                                        await viewModel.updateSoundVolume(value);
-                                        // Notify keyboard viewmodel to update volume
-                                        if (mounted) {
-                                          context.read<KeyboardViewModel>().reloadSoundSettings();
-                                        }
-                                      },
-                                      onChangeEnd: (double value) {
-                                        // Play preview at selected volume
-                                        viewModel.playPreview(viewModel.selectedSound);
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    width: 45,
-                                    child: Text(
-                                      '${(viewModel.soundVolume * 100).round()}%',
-                                      style: theme.textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                ],
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: viewModel.isTesting ? null : _testConnection,
+                    icon: viewModel.isTesting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+                          )
+                        : const Icon(Icons.wifi_find),
+                    label: Text(
+                      viewModel.isTesting ? 'Testing...' : 'Test Connection',
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 16),
-
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('About', style: theme.textTheme.titleLarge),
-                        const SizedBox(height: 16),
-
-                        const ListTile(
-                          leading: Icon(Icons.info_outline),
-                          title: Text('Version'),
-                          subtitle: Text('1.0.0'),
-                        ),
-
-                        const ListTile(
-                          leading: Icon(Icons.keyboard),
-                          title: Text('Keyote Remote'),
-                          subtitle: Text('Remote keyboard for USB tethering'),
-                        ),
-                      ],
-                    ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _saveSettings,
+                    icon: const Icon(Icons.save),
+                    label: const Text('Save'),
                   ),
                 ),
               ],
             ),
-          ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppearanceCard(SettingsViewModel viewModel, ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Appearance', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 16),
+
+            SwitchListTile(
+              title: const Text('Dark Mode'),
+              subtitle: const Text('Toggle between light and dark theme'),
+              value: viewModel.themeMode == ThemeMode.dark,
+              onChanged: (_) => viewModel.toggleTheme(),
+              secondary: Icon(
+                viewModel.themeMode == ThemeMode.dark
+                    ? Icons.dark_mode
+                    : Icons.light_mode,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSoundSettingsCard(SettingsViewModel viewModel, ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Sound Settings', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 16),
+
+            SwitchListTile(
+              title: const Text('Key Press Sound'),
+              subtitle: const Text('Enable or disable sound feedback'),
+              value: viewModel.soundEnabled,
+              onChanged: (value) => viewModel.updateSoundEnabled(value),
+              secondary: Icon(
+                viewModel.soundEnabled ? Icons.volume_up : Icons.volume_off,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            ListTile(
+              leading: const Icon(Icons.music_note),
+              title: const Text('Sound Type'),
+              subtitle: DropdownButton<String>(
+                value: viewModel.selectedSound,
+                isExpanded: true,
+                items: AppConstants.soundLabels.entries.map((entry) {
+                  return DropdownMenuItem<String>(
+                    value: entry.key,
+                    child: Row(
+                      children: [
+                        Text(entry.value),
+                        const SizedBox(width: 8),
+                        if (viewModel.selectedSound == entry.key)
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 16,
+                          ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) async {
+                  if (newValue != null) {
+                    await viewModel.updateSelectedSound(newValue);
+                    // Notify keyboard viewmodel to reload sound
+                    if (mounted) {
+                      context.read<KeyboardViewModel>().reloadSoundSettings();
+                    }
+                  }
+                },
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            ListTile(
+              leading: const Icon(Icons.volume_up),
+              title: const Text('Volume'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Slider(
+                          value: viewModel.soundVolume,
+                          min: AppConstants.minVolume,
+                          max: AppConstants.maxVolume,
+                          divisions: 20,
+                          label: '${(viewModel.soundVolume * 100).round()}%',
+                          onChanged: (double value) async {
+                            await viewModel.updateSoundVolume(value);
+                            // Notify keyboard viewmodel to update volume
+                            if (mounted) {
+                              context
+                                  .read<KeyboardViewModel>()
+                                  .reloadSoundSettings();
+                            }
+                          },
+                          onChangeEnd: (double value) {
+                            // Play preview at selected volume
+                            viewModel.playPreview(viewModel.selectedSound);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 45,
+                        child: Text(
+                          '${(viewModel.soundVolume * 100).round()}%',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutCard(ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('About', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 16),
+
+            const ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text('Version'),
+              subtitle: Text('1.0.0'),
+            ),
+
+            const ListTile(
+              leading: Icon(Icons.keyboard),
+              title: Text('Keyote Remote'),
+              subtitle: Text('Remote keyboard for USB tethering'),
+            ),
+          ],
         ),
       ),
     );
