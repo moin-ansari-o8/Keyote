@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:soundpool/soundpool.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 import '../models/server_config.dart';
 import '../services/keyboard_service.dart';
 import '../services/storage_service.dart';
@@ -9,8 +8,8 @@ import '../utils/constants.dart';
 class SettingsViewModel extends ChangeNotifier {
   final KeyboardService _keyboardService;
   final StorageService _storageService;
-  Soundpool? _previewPool;
-  final Map<String, int> _soundCache = {};
+  SoLoud? _previewSoloud;
+  final Map<String, AudioSource> _soundCache = {};
 
   String _ip = '';
   int _port = 5000;
@@ -21,13 +20,17 @@ class SettingsViewModel extends ChangeNotifier {
   String _selectedSound = AppConstants.defaultSound;
 
   SettingsViewModel(this._keyboardService, this._storageService) {
-    _previewPool = Soundpool.fromOptions(
-      options: SoundpoolOptions(
-        streamType: StreamType.notification,
-        maxStreams: 1,
-      ),
-    );
+    _initPreviewAudio();
     _loadSettings();
+  }
+
+  Future<void> _initPreviewAudio() async {
+    try {
+      _previewSoloud = SoLoud.instance;
+      await _previewSoloud!.init();
+    } catch (e) {
+      _previewSoloud = null;
+    }
   }
 
   String get ip => _ip;
@@ -40,7 +43,7 @@ class SettingsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _previewPool?.dispose();
+    _previewSoloud?.deinit();
     super.dispose();
   }
 
@@ -128,19 +131,18 @@ class SettingsViewModel extends ChangeNotifier {
   }
 
   Future<void> playPreview(String sound) async {
-    if (_previewPool == null) return;
+    if (_previewSoloud == null) return;
 
     try {
       // Load sound if not cached
       if (!_soundCache.containsKey(sound)) {
-        final asset = await rootBundle.load('assets/sounds/$sound');
-        _soundCache[sound] = await _previewPool!.load(asset);
+        _soundCache[sound] = await _previewSoloud!.loadAsset('assets/sounds/$sound');
       }
 
       // Play the cached sound
-      final soundId = _soundCache[sound];
-      if (soundId != null) {
-        await _previewPool!.play(soundId);
+      final soundSource = _soundCache[sound];
+      if (soundSource != null) {
+        _previewSoloud!.play(soundSource);
       }
     } catch (e) {
       // Silently ignore preview errors
