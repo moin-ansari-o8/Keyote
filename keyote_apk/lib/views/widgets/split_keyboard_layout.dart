@@ -140,26 +140,11 @@ class SplitKeyboardLayout extends StatelessWidget {
             widthMultiplier: 1.5,
             onPressed: () => vm.sendSpecialKey('Tab'),
           ),
-          AlphaKey(
-            label: 'Q',
-            onPressed: () => vm.sendCharacter('q'),
-          ),
-          AlphaKey(
-            label: 'W',
-            onPressed: () => vm.sendCharacter('w'),
-          ),
-          AlphaKey(
-            label: 'E',
-            onPressed: () => vm.sendCharacter('e'),
-          ),
-          AlphaKey(
-            label: 'R',
-            onPressed: () => vm.sendCharacter('r'),
-          ),
-          AlphaKey(
-            label: 'T',
-            onPressed: () => vm.sendCharacter('t'),
-          ),
+          AlphaKey(label: 'Q', onPressed: () => vm.sendCharacter('q')),
+          AlphaKey(label: 'W', onPressed: () => vm.sendCharacter('w')),
+          AlphaKey(label: 'E', onPressed: () => vm.sendCharacter('e')),
+          AlphaKey(label: 'R', onPressed: () => vm.sendCharacter('r')),
+          AlphaKey(label: 'T', onPressed: () => vm.sendCharacter('t')),
         ],
       ),
 

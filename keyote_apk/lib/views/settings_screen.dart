@@ -208,7 +208,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Sound Settings', style: theme.textTheme.titleLarge),
+                        Text(
+                          'Sound Settings',
+                          style: theme.textTheme.titleLarge,
+                        ),
                         const SizedBox(height: 16),
 
                         SwitchListTile(
@@ -217,7 +220,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             'Enable or disable sound feedback',
                           ),
                           value: viewModel.soundEnabled,
-                          onChanged: (value) => viewModel.updateSoundEnabled(value),
+                          onChanged: (value) =>
+                              viewModel.updateSoundEnabled(value),
                           secondary: Icon(
                             viewModel.soundEnabled
                                 ? Icons.volume_up
@@ -233,7 +237,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           subtitle: DropdownButton<String>(
                             value: viewModel.selectedSound,
                             isExpanded: true,
-                            items: AppConstants.soundLabels.entries.map((entry) {
+                            items: AppConstants.soundLabels.entries.map((
+                              entry,
+                            ) {
                               return DropdownMenuItem<String>(
                                 value: entry.key,
                                 child: Row(

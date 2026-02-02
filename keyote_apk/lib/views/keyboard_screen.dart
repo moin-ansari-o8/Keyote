@@ -127,10 +127,13 @@ class _KeyboardScreenState extends State<KeyboardScreen> {
                                         width: 2,
                                         height: 16,
                                         color: Colors.white,
-                                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 1,
+                                        ),
                                       ),
                                       // Text after cursor
-                                      if (keyboardVm.cursorPosition < keyboardVm.inputPreview.length)
+                                      if (keyboardVm.cursorPosition <
+                                          keyboardVm.inputPreview.length)
                                         Text(
                                           keyboardVm.inputPreview.substring(
                                             keyboardVm.cursorPosition,

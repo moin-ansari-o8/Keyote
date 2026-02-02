@@ -231,10 +231,10 @@ class KeyboardViewModel extends ChangeNotifier {
 
     // Use round-robin player from pool (like instrument apps)
     final player = _audioPool[_currentPlayerIndex];
-    
+
     // Play immediately - player is already loaded and ready
     player.resume();
-    
+
     // Move to next player in pool for next sound (allows overlapping)
     _currentPlayerIndex = (_currentPlayerIndex + 1) % _audioPoolSize;
   }
@@ -313,11 +313,12 @@ class KeyboardViewModel extends ChangeNotifier {
     }
 
     // Insert character at cursor position
-    _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+    _inputPreview =
+        _inputPreview.substring(0, _cursorPosition) +
         char +
         _inputPreview.substring(_cursorPosition);
     _cursorPosition++;
-    
+
     if (_inputPreview.length > 100) {
       final overflow = _inputPreview.length - 100;
       _inputPreview = _inputPreview.substring(overflow);
@@ -342,11 +343,12 @@ class KeyboardViewModel extends ChangeNotifier {
     }
 
     // Insert at cursor position
-    _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+    _inputPreview =
+        _inputPreview.substring(0, _cursorPosition) +
         char +
         _inputPreview.substring(_cursorPosition);
     _cursorPosition++;
-    
+
     if (_inputPreview.length > 100) {
       final overflow = _inputPreview.length - 100;
       _inputPreview = _inputPreview.substring(overflow);
@@ -397,12 +399,14 @@ class KeyboardViewModel extends ChangeNotifier {
       if (_ctrlPressed && _cursorPosition > 0) {
         // Ctrl+Backspace: delete word before cursor
         final prevBoundary = _findPreviousWordBoundary();
-        _inputPreview = _inputPreview.substring(0, prevBoundary) +
+        _inputPreview =
+            _inputPreview.substring(0, prevBoundary) +
             _inputPreview.substring(_cursorPosition);
         _cursorPosition = prevBoundary;
       } else if (_cursorPosition > 0) {
         // Normal backspace: delete one character before cursor
-        _inputPreview = _inputPreview.substring(0, _cursorPosition - 1) +
+        _inputPreview =
+            _inputPreview.substring(0, _cursorPosition - 1) +
             _inputPreview.substring(_cursorPosition);
         _cursorPosition--;
       }
@@ -414,7 +418,8 @@ class KeyboardViewModel extends ChangeNotifier {
     // Handle Delete key - delete character at cursor
     if (key == 'Delete') {
       if (_cursorPosition < _inputPreview.length) {
-        _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+        _inputPreview =
+            _inputPreview.substring(0, _cursorPosition) +
             _inputPreview.substring(_cursorPosition + 1);
       }
       notifyListeners();
@@ -424,7 +429,8 @@ class KeyboardViewModel extends ChangeNotifier {
 
     // Handle Home - move cursor to start
     if (key == 'Home') {
-      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+      _inputPreview =
+          _inputPreview.substring(0, _cursorPosition) +
           ' {Home} ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition += 8; // Length of " {Home} "
@@ -435,7 +441,8 @@ class KeyboardViewModel extends ChangeNotifier {
 
     // Handle End - move cursor to end
     if (key == 'End') {
-      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+      _inputPreview =
+          _inputPreview.substring(0, _cursorPosition) +
           ' {End} ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition += 7; // Length of " {End} "
@@ -446,7 +453,8 @@ class KeyboardViewModel extends ChangeNotifier {
 
     // Handle Up/Down arrows - show as special keys
     if (key == 'Up') {
-      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+      _inputPreview =
+          _inputPreview.substring(0, _cursorPosition) +
           ' {Up} ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition += 6; // Length of " {Up} "
@@ -456,7 +464,8 @@ class KeyboardViewModel extends ChangeNotifier {
     }
 
     if (key == 'Down') {
-      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+      _inputPreview =
+          _inputPreview.substring(0, _cursorPosition) +
           ' {Down} ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition += 8; // Length of " {Down} "
@@ -467,7 +476,8 @@ class KeyboardViewModel extends ChangeNotifier {
 
     // Handle Enter/Return
     if (key == 'Return' || key == 'Enter') {
-      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+      _inputPreview =
+          _inputPreview.substring(0, _cursorPosition) +
           '\n' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition++;
@@ -486,12 +496,14 @@ class KeyboardViewModel extends ChangeNotifier {
         if (_winPressed) parts.add('Win');
         parts.add('Tab');
         final tabText = ' {${parts.join('+')}} ';
-        _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+        _inputPreview =
+            _inputPreview.substring(0, _cursorPosition) +
             tabText +
             _inputPreview.substring(_cursorPosition);
         _cursorPosition += tabText.length;
       } else {
-        _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+        _inputPreview =
+            _inputPreview.substring(0, _cursorPosition) +
             '\t' +
             _inputPreview.substring(_cursorPosition);
         _cursorPosition++;
@@ -503,7 +515,8 @@ class KeyboardViewModel extends ChangeNotifier {
 
     // Handle Space
     if (key == ' ') {
-      _inputPreview = _inputPreview.substring(0, _cursorPosition) +
+      _inputPreview =
+          _inputPreview.substring(0, _cursorPosition) +
           ' ' +
           _inputPreview.substring(_cursorPosition);
       _cursorPosition++;
