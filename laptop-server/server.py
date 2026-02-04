@@ -25,7 +25,23 @@ import uvicorn
 logger = logging.getLogger(__name__)
 
 VERSION = "1.0.0"
-CONFIG_FILE = Path("config.json")
+
+# Get proper directory for config file
+if getattr(sys, 'frozen', False):
+    # Running as compiled executable
+    APP_DIR = Path(sys.executable).parent
+else:
+    # Running as Python script
+    APP_DIR = Path(__file__).parent
+
+try:
+    CONFIG_FILE = APP_DIR / "config.json"
+except PermissionError:
+    # Fallback to %APPDATA%\KeyoteServer
+    APPDATA_DIR = Path(os.getenv('APPDATA')) / 'KeyoteServer'
+    APPDATA_DIR.mkdir(exist_ok=True)
+    CONFIG_FILE = APPDATA_DIR / "config.json"
+
 keyboard = Controller()
 
 # Global callback for logging to GUI

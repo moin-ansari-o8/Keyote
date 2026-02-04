@@ -4,6 +4,14 @@ Historical record of errors and learnings.
 
 ---
 
+## 2026-02-04 - PyInstaller Executable Permission Error
+_Problem:_ .exe crashed on user's computer with PermissionError [Errno 13] when trying to create log file at `C:\WINDOWS\system32\keyote_server_errors.log`. Used relative paths (`Path("keyote_server_errors.log")`) which resolved to system32 when Windows launched the .exe, requiring admin privileges to write
+_Solution:_ Detect if running as compiled executable with `getattr(sys, 'frozen', False)` and use `Path(sys.executable).parent` to get .exe directory. Added fallback to `%APPDATA%\KeyoteServer` if primary location not writable. Applied to both LOG_FILE and CONFIG_FILE in dashboard.py and server.py
+_Lesson:_ PyInstaller bundles change working directory behavior - never use relative paths for user data in compiled apps. Always use sys.executable path for bundled executables. Provide fallback to %APPDATA% for edge cases (Program Files installs, USB drives, etc.). Test .exe on clean machine without admin rights
+_Related Files:_ dashboard.py (lines 28-58), server.py (lines 28-40), build.spec
+
+---
+
 ## 2026-02-02 - Flutter Widget API Changes
 _Problem:_ Used deprecated `withOpacity()` method and incorrect InkWell parameter `onLongPressUp`
 _Solution:_ Replaced `withOpacity()` with `withValues(alpha: 0.2)` and switched from InkWell to GestureDetector for proper long-press support

@@ -1,10 +1,17 @@
 # Error Logging Documentation
 
 ## Overview
-The Keyote Server Dashboard now includes comprehensive error logging to help diagnose runtime issues.
+The Keyote Server Dashboard includes comprehensive error logging to help diagnose runtime issues.
 
 ## Log File Location
-**Log file:** `keyote_server_errors.log` (created in the same directory as the executable)
+
+**Primary location:** Same directory as KeyoteServer.exe
+- Example: `C:\Users\YourName\Desktop\KeyoteServer\keyote_server_errors.log`
+
+**Fallback location (if primary has permission issues):** `%APPDATA%\KeyoteServer\keyote_server_errors.log`
+- Example: `C:\Users\YourName\AppData\Roaming\KeyoteServer\keyote_server_errors.log`
+
+The application automatically detects which location is writable and uses it.
 
 This file captures:
 - Application startup and initialization
@@ -84,11 +91,14 @@ Open `keyote_server_errors.log` with any text editor. Look for lines containing:
 
 ## Log File Locations
 
+### When running the .exe:
+**Primary:** `keyote_server_errors.log` (same folder as KeyoteServer.exe)
+**Fallback:** `%APPDATA%\KeyoteServer\keyote_server_errors.log`
+
 ### When running directly from Python:
 `W:\workplace-1\keyote\laptop-server\keyote_server_errors.log`
 
-### When running the .exe:
-`keyote_server_errors.log` (same folder as KeyoteServer.exe)
+**Note:** The application automatically chooses a writable location. If you don't see the log file next to the .exe, check the %APPDATA% fallback location.
 
 ## Additional Info
 

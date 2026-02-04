@@ -27,19 +27,46 @@ from server_manager import ServerManager
 
 
 VERSION = "1.0.0"
-CONFIG_FILE = Path("config.json")
-LOG_FILE = Path("keyote_server_errors.log")
 
-# Setup logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_FILE),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+# Get proper directory for config and log files
+if getattr(sys, 'frozen', False):
+    # Running as compiled executable
+    APP_DIR = Path(sys.executable).parent
+else:
+    # Running as Python script
+    APP_DIR = Path(__file__).parent
+
+CONFIG_FILE = APP_DIR / "config.json"
+LOG_FILE = APP_DIR / "keyote_server_errors.log"
+
+# Setup logging with fallback to %APPDATA% if permission denied
+try:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(LOG_FILE),
+            logging.StreamHandler()
+        ]
+    )
+    logger = logging.getLogger(__name__)
+except PermissionError:
+    # Fallback to %APPDATA%\KeyoteServer
+    APPDATA_DIR = Path(os.getenv('APPDATA')) / 'KeyoteServer'
+    APPDATA_DIR.mkdir(exist_ok=True)
+    LOG_FILE = APPDATA_DIR / "keyote_server_errors.log"
+    CONFIG_FILE = APPDATA_DIR / "config.json"
+    
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(LOG_FILE),
+            logging.StreamHandler()
+        ]
+    )
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Using fallback directory: {APPDATA_DIR}")
 
 
 class ServerThread(QThread):
