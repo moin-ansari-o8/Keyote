@@ -1,0 +1,131 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows Server
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        working-directory: laptop-server
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-gui.txt
+          pip install pyinstaller
+          
+      - name: Build executable
+        working-directory: laptop-server
+        run: pyinstaller build.spec --clean
+        
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KeyoteServer-Windows
+          path: laptop-server/dist/KeyoteServer.exe
+          
+  build-android:
+    name: Build Android App
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Install dependencies
+        working-directory: keyote_apk
+        run: flutter pub get
+        
+      - name: Build APK
+        working-directory: keyote_apk
+        run: flutter build apk --release
+        
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KeyoteApp-Android
+          path: keyote_apk/build/app/outputs/flutter-apk/app-release.apk
+          
+  create-release:
+    name: Create GitHub Release
+    needs: [build-windows, build-android]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: KeyoteServer-Windows
+          path: ./artifacts/windows
+          
+      - name: Download Android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: KeyoteApp-Android
+          path: ./artifacts/android
+          
+      - name: Rename artifacts
+        run: |
+          mv ./artifacts/windows/KeyoteServer.exe ./KeyoteServer.exe
+          mv ./artifacts/android/app-release.apk ./KeyoteApp.apk
+          
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Keyote ${{ steps.version.outputs.VERSION }}
+          body: |
+            # Keyote ${{ steps.version.outputs.VERSION }}
+            
+            ## 📦 Downloads
+            
+            ### Windows Server
+            - **KeyoteServer.exe** - Laptop keyboard server
+            - No installation required, no admin rights needed
+            
+            ### Android App
+            - **KeyoteApp.apk** - Mobile keyboard controller
+            - Enable "Install from unknown sources" to install
+            
+            ## 📖 Documentation
+            - [Server README](https://github.com/${{ github.repository }}/blob/main/laptop-server/README.md)
+            - [Build Guide](https://github.com/${{ github.repository }}/blob/main/laptop-server/BUILD_GUIDE.md)
+            
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref }}
+          files: |
+            KeyoteServer.exe
+            KeyoteApp.apk
+          draft: false
+          prerelease: false
